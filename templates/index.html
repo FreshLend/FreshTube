@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Смотрите любимые видео, слушайте любимые песни, загружайте собственные ролики и делитесь ими с друзьями, близкими и целым миром.">
+    <meta name="keywords" content="FreshTube, видео, музыка, смотреть видео онлайн, слушать песни, загружать ролики, делиться видео, видео хостинг, лучшие видео, топ видео, видео платформа, музыка онлайн, музыкальные клипы">
+    <meta name="author" content="FreshLend Studio">
+    <meta name="copyright" content="FreshLend Studio">
+    <meta name="date" content="2025-02-03T01:08:00Z">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:title" content="FreshTube - Видео и музыка">
+    <meta property="og:description" content="Смотрите любимые видео, слушайте любимые песни, загружайте собственные ролики и делитесь ими с друзьями, близкими и целым миром.">
+    <meta property="og:image" content="{{ url_for('static', filename='ui/logo.png')}}">
+    <meta property="og:url" content="http://freshtube.ru:43034">
+    <meta property="og:type" content="website">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FreshTube - Видео и музыка">
+    <meta name="twitter:description" content="Смотрите любимые видео, слушайте любимые песни, загружайте собственные ролики и делитесь ими с друзьями, близкими и целым миром.">
+    <meta name="twitter:image" content="{{ url_for('static', filename='ui/logo.png')}}">
+    <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZB4E3QSLG"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-VZB4E3QSLG');
+    </script>
+
+    <title>FreshTube</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='ui/index.css') }}">
+<link id="material-icons-preload" rel="preload" href="https://fonts.googleapis.com/icon?family=Material+Icons" as="style">
+<script>
+window.addEventListener('load', function() {
+    var link = document.getElementById('material-icons-preload');
+    var newLink = document.createElement('link');
+    newLink.href = link.href;
+    newLink.rel = 'stylesheet';
+    document.head.appendChild(newLink);
+});
+</script>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/">
+            <img class="logo" src="{{ url_for('static', filename='ui/logo.png')}}" alt="logo">
+        </a>
+	    <div class="search-container">
+            <div class="search-box">
+                <input type="text" placeholder="Введите запрос" onkeydown="redirectToSearch(event)">
+            </div>
+        </div>
+        <a class="upload" href="publish"><span style="transform: scaleX(1.5);" class="material-icons">upgrade</span></a>
+        {% if session.get('user_id') %}
+            <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+        {% else %}
+            <img src="{{ url_for('static', filename='ui/user.png') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+        {% endif %}
+        <div id="user-menu" class="user-menu">
+            {% if session.get('user_id') %}
+                <div class="user-container">
+                    <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+                    <div class="menu-items">
+                        <b>{{ user.nickname }}</b>
+                        <p style="margin-top: 5px;">ID: {{ session.get('user_id') }}</p>
+                    </div>
+                </div>
+                <div class="channel-link">
+                    <a href="{{ url_for('channel', id=session.get('user_id')) }}">Посмотреть канал</a>
+                </div>
+                <div class="menu-section">
+                    <a href="{{ url_for('logout') }}"><button><b>Выйти</b></button></a>
+                </div>
+                <div class="menu-section">
+                    <a href="settings"><button><b>Настройки</b></button></a>
+                </div>
+            {% else %}
+                <a href="{{ url_for('login') }}"><button><b>Вход</b></button></a>
+                <a href="{{ url_for('register') }}"><button><b>Регистрация</b></button></a>
+            {% endif %}
+        </div>
+	</div>
+
+    <div class="container">
+        <ul id="video-list" class="video-list">
+            {% for video in videos[:24] %}
+                <li class="video-item" data-title="{{ video.title }}" data-description="{{ video.description }}">
+                    <a href="{{ url_for('video', si=video.id) }}">
+                        <img class="video-thumbnail" src="{{ url_for('static', filename='imgs/' + video.cover) }}" alt="Cover">
+                        <div class="video-title">
+                            <h3><strong>{{ video.title }}</strong></h3>
+                        </div>
+                        <div>
+                            <b><span style="font-size: 18px;" class="material-icons">thumb_up</span> {{ video.likes | format_number }} | <span style="font-size: 18px;" class="material-icons">thumb_down</span> {{ video.dislikes | format_number }} • {{ video.relative_time }}</b>
+                        </div>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+        <div id="loading" style="text-align:center; display:none;">
+            <div style="display: flex;">
+                <div class="loader-circle"></div>
+                <div class="loader-circle"></div>
+                <div class="loader-circle"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let offset = 24;
+        let isLoading = false;
+        let allVideosLoaded = false;
+
+        function loadMoreVideos() {
+            if (isLoading || allVideosLoaded) return;
+            isLoading = true;
+            document.getElementById('loading').style.display = 'block';
+
+            fetch(`/load_more_videos?offset=${offset}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.videos.length > 0) {
+                    let videoList = document.getElementById('video-list');
+                    let staticUrl = data.static_url;
+                    data.videos.forEach(video => {
+                        let li = document.createElement('li');
+                        li.classList.add('video-item');
+                        li.setAttribute('data-title', video.title);
+                        li.setAttribute('data-description', video.description);
+                        li.innerHTML = `
+                            <a href="/watch?si=${video.id}">
+                                <img class="video-thumbnail" src="${staticUrl}imgs/${video.cover}" alt="Cover">
+                                <div class="video-title">
+                                    <h3><strong>${video.title}</strong></h3>
+                                </div>
+                                <div>
+                                    <b><span style="font-size: 18px;" class="material-icons">thumb_up</span> ${video.likes} | <span style="font-size: 18px;" class="material-icons">thumb_down</span> ${video.dislikes} • ${video.relative_time}</b>
+                                </div>
+                            </a>
+                        `;
+                        videoList.appendChild(li);
+                    });
+                    offset += data.videos.length;
+
+                    if (data.all_videos_loaded) {
+                        allVideosLoaded = true;
+                        document.getElementById('loading').style.display = 'none';
+                    }
+                } else {
+                    allVideosLoaded = true;
+                    document.getElementById('loading').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке видео:', error);
+                document.getElementById('loading').style.display = 'none';
+            })
+            .finally(() => {
+                isLoading = false;
+            });
+        }
+
+        window.addEventListener('scroll', function() {
+            if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100) {
+                loadMoreVideos();
+            }
+        });
+    </script>
+
+    <script>
+        function redirectToSearch(event) {
+            if (event.key === 'Enter') {
+                var query = document.querySelector('input[type="text"]').value.trim();
+                if (query) {
+                    var searchUrl = '/search?query=' + encodeURIComponent(query);
+                    window.location.href = searchUrl;
+                }
+            }
+        }
+    </script>
+
+    <script>
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+        }
+    </script>
+
+<div class="modal" id="modal" style="display: none;">
+    <div class="modal-content">
+        <button class="close-btn" onclick="closeModal()">X</button>
+        <h2>FreshTube - НАХОДИТСЯ В ОТКРЫТОМ АЛЬФА ТЕСТЕ</h2>
+        <p>Мы не можем гарантировать сохранность ваших опубликованных видео.<br>Из-за крупных обновлений может измениться ID приведу пример с текущего "1234" на "1aB-u33F" в видео и каналах, что приведет к исчезновению ваших зарегистрированных аккаунтов.<br>Однако вы всегда сможете зарегистрироваться снова, и мы постараемся сохранить ваши видео и аккаунты, если это будет возможно.</p>
+        <p>Не стоит переживать, обновление произойдёт после того, как мы перенесём весь необходимый функционал и дизайн с YouTube.<br>Этот процесс может занять значительное время... может даже вечность, так как <a href="/channel?id=1">разработчик один</a>.<br>Однако, возможно, ID видео изменятся раньше, чем новый функционал и дизайн, так как это крайне важно для других функций и улучшений, как для нас, так и для пользователей.</p>
+    </div>
+</div>
+
+<style>
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .modal-content {
+        background-color: #1e1e1e;
+        padding: 20px;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 600px;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    .modal p {
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+
+    .modal a {
+        color: #00bcd4;
+        text-decoration: none;
+    }
+
+    .close-btn {
+        position: relative;
+        margin-left: 95%;
+        margin-bottom: 20px;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        color: aqua;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    .modal button {
+        background-color: #363636;
+        border: black;
+        border-radius: 50%;
+    }
+</style>
+
+<script>
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+    function checkModal() {
+        const lastShown = localStorage.getItem('lastModalShown');
+        const currentTime = new Date().getTime();
+        if (!lastShown || currentTime - lastShown > 86400000) {
+            document.getElementById('modal').style.display = 'flex';
+            localStorage.setItem('lastModalShown', currentTime);
+        }
+    }
+    checkModal();
+</script>
+
+</body>
+</html>

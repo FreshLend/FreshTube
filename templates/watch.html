@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="FreshLend Studio">
+    <meta name="copyright" content="FreshLend Studio">
+    <meta name="date" content="{{ video['upload_date'] }}">
+    <meta name="robots" content="index, follow">
+
+    <meta name="description" content="{{ video['description'] }}">
+    <meta name="keywords" content="{{ video['tags'] }}">
+    <meta property="og:title" content="{{ video['title'] }}">
+    <meta property="og:description" content="{{ video['description'] }}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:image" content="{{ video['thumbnail_url'] }}">
+    <meta property="og:type" content="video.other">
+    <meta property="og:video" content="{{ video['video_url'] }}">
+    <meta property="og:video:type" content="video/mp4">
+    <meta property="og:video:width" content="1280">
+    <meta property="og:video:height" content="720">
+    <meta property="og:site_name" content="FreshTube">
+
+    <meta name="twitter:card" content="player">
+    <meta name="twitter:title" content="{{ video['title'] }}">
+    <meta name="twitter:description" content="{{ video['description'] }}">
+    <meta name="twitter:image" content="{{ video['thumbnail_url'] }}">
+    <meta name="twitter:player" content="{{ video['video_url'] }}">
+    <meta name="twitter:player:width" content="1280">
+    <meta name="twitter:player:height" content="720">
+    <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZB4E3QSLG"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-VZB4E3QSLG');
+    </script>
+
+    <title>{{ video['title'] }} - FreshTube</title>
+    <script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "VideoObject",
+        "name": "{{ video['title'] }}",
+        "description": "{{ video['description'] }}",
+        "thumbnailUrl": "{{ video['thumbnail_url'] }}",
+        "contentUrl": "{{ video['video_url'] }}",
+        "uploadDate": "{{ video['upload_date'] }}",
+        "duration": "{{ video['duration'] }}",
+        "publisher": {
+            "@type": "Organization",
+            "name": "FreshTube",
+            "logo": "{{ url_for('static', filename='ui/logo.png') }}"
+        }
+    }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui/watch.css') }}">
+    <link id="material-icons-preload" rel="preload" href="https://fonts.googleapis.com/icon?family=Material+Icons" as="style">
+    <script>
+    window.addEventListener('load', function() {
+        var link = document.getElementById('material-icons-preload');
+        var newLink = document.createElement('link');
+        newLink.href = link.href;
+        newLink.rel = 'stylesheet';
+        document.head.appendChild(newLink);
+    });
+    </script>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/">
+            <img class="logo" src="{{ url_for('static', filename='ui/logo.png')}}">
+        </a>
+        <a class="upload" href="publish"><span style="transform: scaleX(1.5);" class="material-icons">upgrade</span></a>
+            {% if session.get('user_id') %}
+                <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+            {% else %}
+                <img src="{{ url_for('static', filename='ui/user.png') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+            {% endif %}
+            <div id="user-menu" class="user-menu">
+                {% if session.get('user_id') %}
+                    <div class="user-container">
+                        <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+                        <div class="menu-items">
+                            <b>{{ user.nickname }}</b>
+                            <p style="margin-top: 5px;">ID: {{ session.get('user_id') }}</p>
+                        </div>
+                    </div>
+                    <div class="channel-link">
+                        <a href="{{ url_for('channel', id=session.get('user_id')) }}">Посмотреть канал</a>
+                    </div>
+                    <div class="menu-section">
+                        <a href="{{ url_for('logout') }}"><button><b>Выйти</b></button></a>
+                    </div>
+                    <div class="menu-section">
+                        <a href="settings"><button><b>Настройки</b></button></a>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('login') }}"><button><b>Вход</b></button></a>
+                    <a href="{{ url_for('register') }}"><button><b>Регистрация</b></button></a>
+                {% endif %}
+            </div>
+        </div>        
+	</div>
+
+    <div class="main-container">
+        <div class="left-container">
+            <div class="box">
+                <video id="video" controls>
+                    <source src="{{ url_for('custom_static', filename='video/' + video.filename) }}" type="video/mp4">
+                    <track src="{{ url_for('static', filename='ui/captions_ru_1.vtt') }}" kind="captions" srclang="ru" label="Russian">
+                    Your browser does not support the video tag.
+                </video>
+                <div style="height: 0px;" id="toggle-description" class="info">
+                    <div class="title" style="word-wrap: break-word; overflow-wrap: break-word; white-space: normal; max-width: 100%;">
+                        {{ video.title }}
+                        <div>
+                            <div style="color: #adadad;" class="description-button">{{ video.relative_time }} <b style=" color: white;">Ещё</b></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="box">
+                    <div>
+                        <p class="nickname">
+                            <a href="{{ url_for('channel', id=video.channel_id) }}">
+                                <img class="avatar" src="{{ url_for('static', filename='imgs/' + video_user.avatar) }}" alt="{{ video_user.nickname }}'s avatar">
+                                <p class="nickname-1">
+                                    {{ video_user.nickname }}
+                                </p>
+                                <p class="subscribe">
+                                    <span> Подписчиков: {{ formatted_subscribers }}</span>
+                                </p>
+                            </a>
+                        </p>                        
+                        <div class="like-dislike-buttons">
+                            <form action="/like_dislike" method="post" style="display: inline-block;">
+                                <input type="hidden" name="video_id" value="{{ video.id }}">
+                                <button style="font-size: 16px;" type="submit" name="action" value="like"><span class="material-icons">thumb_up</span> {{ video.likes | format_number }}</button>
+                                <button style="font-size: 16px;" type="submit" name="action" value="dislike"><span class="material-icons">thumb_down</span> {{ video.dislikes | format_number }}</button>
+                            </form>
+                        
+                            <div class="subscribe-button" style="display: inline-block; margin-left: 10px;">
+                                {% if user is not none %}
+                                    {% if user.id == channel.user_id %}
+                                        <button style="background-color: rgb(56, 56, 56); color: grey;" type="button" disabled>Подписаться</button>
+                                    {% elif user.id in channel.subscribers %}
+                                        <form action="/unsubscribe" method="post" style="display: inline;">
+                                            <input type="hidden" name="channel_id" value="{{ channel.id }}">
+                                            <button type="submit">Отписаться</button>
+                                        </form>
+                                    {% else %}
+                                        <form action="/subscribe" method="post" style="display: inline;">
+                                            <input type="hidden" name="channel_id" value="{{ channel.id }}">
+                                            <button type="submit">Подписаться</button>
+                                        </form>
+                                    {% endif %}
+                                {% else %}
+                                    <button style="background-color: rgb(56, 56, 56); color: grey;" type="button" disabled>Подписаться</button>
+                                {% endif %}
+                            </div>                            
+                        </div>                        
+                    </div>
+                </div>
+            </div>
+        <div class="right-container">
+            <div class="box" id="comment1-section">
+                <div class="comments" style="display: block;" id="comments">
+                    <form action="/add_comment" method="post">
+                        <textarea name="comment" placeholder="Добавьте комментарий..." required></textarea>
+                        <input type="hidden" name="video_id" value="{{ video.id }}">
+                        <button type="submit">Отправить</button>
+                    </form>
+                </div>
+            </div>
+            <div class="box" style="display: block;" id="comment-section">
+                <div class="scroll-container1">
+                <div class="comment-list" id="comments">
+                    {% for comment in comments %}
+                        <div class="comment">
+                            <a href="{{ url_for('channel', id=comment.user_id) }}">
+                                <img src="{{ url_for('static', filename='imgs/' + comment.user.avatar) }}" alt="Avatar" class="avatar">
+                            </a>
+                            <div class="comment-content">
+                                <p class="nickname">{{ comment.user.nickname }}</p>
+                                <p class="comment-text">{{ comment.text | safe }}</p>
+                                <div class="likes-dislikes">
+                                    <form action="{{ url_for('vote') }}" method="post" style="display:inline;">
+                                        <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                                        <button type="submit" name="action" value="like" class="like-button"><span class="material-icons" >thumb_up</span></button>
+                                        <span class="like-count">{{ comment.likes }}</span>
+                                        <button type="submit" name="action" value="dislike" class="dislike-button"><span class="material-icons" >thumb_down</span></button>
+                                        <span class="dislike-count">{{ comment.dislikes }}</span>
+                                    </form>
+                                    <button class="sub-comment-button" data-comment-id="{{ comment.id }}">💬</button>
+                                </div>
+                                <div class="comment"></div>
+                                <div style="margin-top: 10px;" class="sub-comments" id="sub-comments-{{ comment.id }}">
+                                    {% for sub_comment in comment.sub_comments %}
+                                        <div class="sub-comment">
+                                            <a href="{{ url_for('channel', id=sub_comment.user_id) }}">
+                                                <img src="{{ url_for('static', filename='imgs/' + sub_comment.user.avatar) }}" alt="Avatar" class="avatar">
+                                            </a>
+                                            <div class="comment-content">
+                                                <p class="nickname">{{ sub_comment.user.nickname }}</p>
+                                                <p class="comment-text">{{ sub_comment.text | format_comment_text | safe }}</p>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="comments" id="sub-comment-form-{{ comment.id }}">
+                                    <form action="/add_sub_comment" method="post">
+                                        <textarea name="text" placeholder="Добавьте комментарий..." required></textarea>
+                                        <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                                        <button type="submit">Отправить</button>
+                                        <button class="sub-comment-button" data-comment-id="{{ comment.id }}">Закрыть</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                </div>
+            </div>
+            <div class="box" style="display: none;" id="description-section">
+                <div>
+                    <p>{{ video.description | safe }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+        }
+    </script>
+
+    <script>
+        let descriptionVisible = false;
+        let CommentVidible = true;
+
+        document.getElementById('toggle-description').onclick = function() {
+            const commentsSection = document.getElementById('comment-section');
+            const comments1Section = document.getElementById('comment1-section');
+            const comments2Section = document.getElementById('comments');
+            const descriptionSection = document.getElementById('description-section');
+
+            if (CommentVidible) {
+                commentsSection.style.display = 'none';
+                comments1Section.style.display = 'none';
+                comments2Section.style.display = 'none';
+                descriptionSection.style.display = 'block';
+            } else {
+                commentsSection.style.display = 'block';
+                comments1Section.style.display = 'block';
+                comments2Section.style.display = 'block';
+                descriptionSection.style.display = 'none';
+            }
+
+            CommentVidible = !CommentVidible;
+            descriptionVisible = false;
+        };
+        
+        document.querySelectorAll('.sub-comment-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const commentId = button.getAttribute('data-comment-id');
+                const subCommentsDiv = document.getElementById(`sub-comments-${commentId}`);
+                const subCommentFormDiv = document.getElementById(`sub-comment-form-${commentId}`);
+
+                if (subCommentsDiv.style.display === 'block') {
+                    subCommentsDiv.style.display = 'none';
+                    subCommentFormDiv.style.display = 'none';
+                } else {
+                    subCommentsDiv.style.display = 'block';
+                    subCommentFormDiv.style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

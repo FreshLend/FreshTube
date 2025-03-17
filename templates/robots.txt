@@ -1,0 +1,10 @@
+User-agent: *
+Allow: *
+Disallow: /cdn-cgi/trace
+Disallow: /publish
+Disallow: /register
+Disallow: /login
+Disallow: /search
+Disallow: /ip_not_allowed
+Disallow: /you_are_banned
+Sitemap: http://freshtube.ru:43034

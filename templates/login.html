@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='ui/favicon.png') }}">
+    <title>Вход</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui/login.css') }}">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZB4E3QSLG"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-VZB4E3QSLG');
+    </script>
+
+</head>
+<body>
+    
+    <div class="container">
+        <a style="font-size: 44px;" href="/">FreshTube</a>
+        <h1>Вход</h1>
+        <form action="{{ url_for('login') }}" method="post">
+            <div class="input">
+                <input type="email" name="email" placeholder="Email" required>
+            </div>
+            <div class="input">
+                <input type="password" name="password" placeholder="Пароль" required>
+            </div>
+            <div class="input">
+                <button type="submit" class="login-btn">Войти</button>
+            </div>
+            <h3><a href="{{ url_for('register') }}" class="register-link">Нет аккаунта?</a></h3>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ channel.description }}">
+    <meta name="keywords" content="FreshTube, канал, видео, музыка, пользователь, подписки, контент">
+    <meta name="author" content="{{ channel.name }}">
+    <meta name="copyright" content="FreshLend Studio">
+    <meta name="date" content="{{ channel.date }}">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:title" content="{{ channel.name }} - FreshTube">
+    <meta property="og:description" content="{{ channel.description }}">
+    <meta property="og:image" content="{{ url_for('static', filename='imgs/' + channel.avatar) }}">
+    <meta property="og:url" content="{{ url_for('channel', id=user_id, _external=True) }}">
+    <meta property="og:type" content="website">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ channel.name }} - FreshTube">
+    <meta name="twitter:description" content="{{ channel.description }}">
+    <meta name="twitter:image" content="{{ url_for('static', filename='imgs/' + channel.avatar) }}">
+    <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZB4E3QSLG"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-VZB4E3QSLG');
+    </script>
+
+    <title>{{ channel.name }} - FreshTube</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui/channel.css') }}">
+<link id="material-icons-preload" rel="preload" href="https://fonts.googleapis.com/icon?family=Material+Icons" as="style">
+<script>
+window.addEventListener('load', function() {
+    var link = document.getElementById('material-icons-preload');
+    var newLink = document.createElement('link');
+    newLink.href = link.href;
+    newLink.rel = 'stylesheet';
+    document.head.appendChild(newLink);
+});
+</script>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/">
+            <img class="logo" src="{{ url_for('static', filename='ui/logo.png')}}">
+        </a>
+        <a class="upload" href="publish"><span style="transform: scaleX(1.5);" class="material-icons">upgrade</span></a>
+            {% if session.get('user_id') %}
+                <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+            {% else %}
+                <img src="{{ url_for('static', filename='ui/user.png') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+            {% endif %}
+            <div id="user-menu" class="user-menu">
+                {% if session.get('user_id') %}
+                    <div class="user-container">
+                        <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+                        <div class="menu-items">
+                            <b>{{ user.nickname }}</b>
+                            <p style="margin-top: 5px;">ID: {{ session.get('user_id') }}</p>
+                        </div>
+                    </div>
+                    <div class="channel-link">
+                        <a href="{{ url_for('channel', id=session.get('user_id')) }}">Посмотреть канал</a>
+                    </div>
+                    <div class="menu-section">
+                        <a href="{{ url_for('logout') }}"><button><b>Выйти</b></button></a>
+                    </div>
+                    <div class="menu-section">
+                        <a href="settings"><button><b>Настройки</b></button></a>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('login') }}"><button><b>Вход</b></button></a>
+                    <a href="{{ url_for('register') }}"><button><b>Регистрация</b></button></a>
+                {% endif %}
+            </div>
+        </div>        
+	</div>
+
+    <div class="header">
+        <img class="avatar" src="{{ url_for('static', filename='imgs/' + channel.avatar) }}" alt="{{ channel.name }}'s avatar" onclick="toggleEditForm('edit-avatar-form')">
+        <div class="header-content">
+            <h2 onclick="toggleEditForm('edit-name-form')">{{ channel.name }}</h2>
+            <p style="margin-top: 5px;">ID:{{ channel.user_id }} • {{ formatted_subscribers }} подписчиков</p>
+            <p onclick="toggleEditForm('edit-description-form')">{{ channel.description }}</p>
+            <div class="subscribe-button">
+                {% if user_id is not none %}
+                    {% if user_id == channel.user_id %}
+                        <!-- Кнопка заблокирована для автора канала -->
+                        <button style="background-color: grey;" type="button" disabled>Подписаться</button>
+                    {% elif user_id in channel.subscribers %}
+                        <form action="/unsubscribe" method="post">
+                            <input type="hidden" name="channel_id" value="{{ channel.id }}">
+                            <button type="submit">Отписаться</button>
+                        </form>
+                    {% else %}
+                        <form action="/subscribe" method="post">
+                            <input type="hidden" name="channel_id" value="{{ channel.id }}">
+                            <button type="submit">Подписаться</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <button style="background-color: grey;" type="button" disabled>Подписаться</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if user_id is not none %}
+        {% if user_id == channel.user_id %}
+            <div class="edit-form" id="edit-avatar-form">
+                <form action="/save-avatar" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="user_id" value="{{ channel.user_id }}">
+                    <input type="file" name="avatar" accept="image/*">
+                    <button type="submit">Сохранить</button>
+                </form>             
+            </div>
+            {% endif %}
+        {% else %}
+    {% endif %}
+    
+    {% if user_id is not none %}
+        {% if user_id == channel.user_id %}
+            <div class="edit-form" id="edit-name-form">
+                <form action="/save-nickname" method="post">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <label for="nickname">Новый никнейм:</label>
+                    <input type="text" name="nickname" value="{{ user.nickname }}" required>
+                    <button type="submit">Сохранить</button>
+                </form>             
+            </div>   
+            {% endif %}
+        {% else %}
+    {% endif %} 
+    
+    {% if user_id is not none %}
+        {% if user_id == channel.user_id %}
+            <div class="edit-form" id="edit-description-form">
+                <form action="/save-description" method="post">
+                    <input type="hidden" name="user_id" value="{{ channel.user_id }}">
+                    <textarea name="description" rows="4" cols="50">{{ channel.description }}</textarea>
+                    <button type="submit">Сохранить описание</button>
+                </form>             
+            </div>
+            {% endif %}
+        {% else %}
+    {% endif %}
+
+    <div class="container">
+        <ul id="video-list" class="video-list">
+            {% for video in videos %}
+                <li class="video-item" data-title="{{ video.title }}" data-description="{{ video.description }}">
+                    <a href="{{ url_for('video', si=video.id) }}">
+                        <img class="video-thumbnail" src="{{ url_for('static', filename='imgs/' + video.cover) }}" width="640" height="360" alt="Cover">
+                        <div class="video-title">
+                            <h3><strong>{{ video.title }}</strong></h3>
+                        </div>
+                        <div>
+                            <b><p><span style="font-size: 18px;" class="material-icons">thumb_up</span> {{ video.likes | format_number }} | <span style="font-size: 18px;" class="material-icons">thumb_down</span> {{ video.dislikes | format_number }} • {{ video.relative_time }}</p></b>
+                        </div>
+                    </a>
+                </li>
+            {% else %}
+                <li class="video-item">
+                    <img class="video-thumbnail" src="{{ url_for('static', filename='ui/novideo.png') }}" alt="Cover">
+                    <p>Нет видео для отображения.</p>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+        }
+    </script>
+
+    <script>
+        function toggleEditForm(formId) {
+            const form = document.getElementById(formId);
+            form.style.display = form.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function saveAvatar() {
+            // Add code to handle avatar upload
+            document.getElementById('edit-avatar-form').style.display = 'none';
+        }
+
+        function saveName() {
+            var newName = document.getElementById('name-input').value;
+            // Add code to save new name
+            document.querySelector('.header-content h1').textContent = newName;
+            document.getElementById('edit-name-form').style.display = 'none';
+        }
+
+        function saveDescription() {
+            var newDescription = document.getElementById('description-input').value;
+            // Add code to save new description
+            document.querySelector('.header-content p').textContent = newDescription;
+            document.getElementById('edit-description-form').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

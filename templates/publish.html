@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZB4E3QSLG"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-VZB4E3QSLG');
+    </script>
+
+    <title>Опубликовать видео</title>
+    <style>
+        body {
+            background-color: #0F0F0F;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .logo {
+        width: 128px;
+        height: 20px;
+        transform: scaleX(0.9) scaleY(1.2);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: rgba(25, 25, 25, 0.5);
+            border-radius: 10px;
+            margin-top: 55px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-control-file, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            color: white;
+            background: rgb(41, 41, 41);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: rgb(28, 28, 28);
+        }
+
+	    .form-control-file {
+	        width: 100%;
+	        padding: 0.5rem;
+	        border: 2px solid rgb(45, 45, 45);
+	        border-radius: 5px;
+	        background-color: rgb(32, 32, 32);
+	        color: white;
+	        cursor: pointer;
+	    }
+
+	    .form-control-file::file-selector-button {
+	        background-color: rgb(41, 41, 41);
+	        color: white;
+	        border: none;
+	        border-radius: 5px;
+	        padding: 0.5rem;
+	        cursor: pointer;
+	    }
+
+	    .form-control-file::file-selector-button:hover {
+	        background-color: rgb(28, 28, 28);
+	    }
+
+        .input-area input, textarea {
+            background: rgb(41, 41, 41);
+            color: white;
+            width: 100%;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 14px;
+        }
+        
+        .top-bar {
+            background-color: #0F0F0F;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/">
+            <img class="logo" src="{{ url_for('static', filename='ui/logo.png')}}">
+        </a>
+	</div>
+    
+    <div class="container mt-5">
+        <h1 class="mb-4">Публикация</h1>
+    
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <div class="input-area" class="form-group">
+                <label for="title">Название</label>
+                <input type="text" class="form-control" id="title" name="title" placeholder="Название..." required>
+            </div>
+            <div class="input-area" class="form-group">
+                <label for="description">Описание</label>
+                <textarea class="form-control" id="description" name="description" rows="3" placeholder="Описание..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="video">Видео</label>
+                <input type="file" class="form-control-file" id="video" name="video" accept="video/*" required>
+            </div>
+            <div class="form-group">
+                <label for="cover">Обложка</label>
+                <input type="file" class="form-control-file" id="cover" name="cover" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Опубликовать</button>
+        </form>
+    
+        <div id="progressContainer" class="progress-container" style="display: none; margin-top: 20px;">
+            <h4>Загрузка файлов...</h4>
+            <progress id="uploadProgress" value="0" max="100" style="width: 100%;"></progress>
+            <div id="progressText" style="text-align: center; margin-top: 10px;">0% - 0MB из 0MB</div>
+            <div id="speedText" style="text-align: center; margin-top: 10px;">Скорость: 0 б/с</div>
+            <div id="estimatedTimeText" style="text-align: center; margin-top: 10px;">Ожидаемое время: 0 сек</div>
+        </div>
+    </div>
+
+    <script>
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+        }
+    </script>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            var formData = new FormData(this);
+
+            document.getElementById('progressContainer').style.display = 'block';
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload', true);
+
+            var startTime = Date.now();
+            var previousLoaded = 0;
+
+            function formatBytes(bytes) {
+                if (bytes < 1024) return bytes + ' б/с';
+                else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' Кб/с';
+                else if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' Мб/с';
+                else return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' Гб/с';
+            }
+
+            function formatTime(seconds) {
+                var days = Math.floor(seconds / (24 * 3600));
+                var hours = Math.floor((seconds % (24 * 3600)) / 3600);
+                var minutes = Math.floor((seconds % 3600) / 60);
+                var sec = Math.floor(seconds % 60);
+
+                var timeString = "";
+                if (days > 0) timeString += days + " дн ";
+                if (hours > 0) timeString += hours + " ч ";
+                if (minutes > 0) timeString += minutes + " мин ";
+                timeString += sec + " сек";
+
+                return timeString;
+            }
+
+            xhr.upload.addEventListener('progress', function(event) {
+                if (event.lengthComputable) {
+                    var percent = (event.loaded / event.total) * 100;
+                    var loadedMB = (event.loaded / (1024 * 1024)).toFixed(2);
+                    var totalMB = (event.total / (1024 * 1024)).toFixed(2);
+
+                    var currentTime = Date.now();
+                    var timeElapsed = (currentTime - startTime) / 1000;
+                    var bytesPerSecond = (event.loaded - previousLoaded) / timeElapsed;
+
+                    var remainingBytes = event.total - event.loaded;
+                    var estimatedTime = remainingBytes / bytesPerSecond;
+                    var estimatedTimeSec = Math.max(0, Math.round(estimatedTime));
+
+                    var formattedTime = formatTime(estimatedTimeSec);
+
+                    document.getElementById('uploadProgress').value = percent;
+                    document.getElementById('progressText').textContent = 
+                        Math.round(percent) + '% - ' + loadedMB + 'MB из ' + totalMB + 'MB';
+                    document.getElementById('speedText').textContent = 'Скорость: ' + formatBytes(bytesPerSecond);
+                    document.getElementById('estimatedTimeText').textContent = 'Ожидаемое время: ' + formattedTime;
+
+                    previousLoaded = event.loaded;
+                    startTime = currentTime;
+                }
+            });
+
+            xhr.onload = function() {
+                if (xhr.status == 200) {
+                    document.getElementById('progressText').textContent = 'Загрузка завершена!';
+                    document.getElementById('speedText').textContent = '';
+                    document.getElementById('estimatedTimeText').textContent = '';
+                    document.getElementById('uploadProgress').style.transition = 'width 0.5s ease-out'
+                    document.getElementById('uploadProgress').value = 100;
+                    setTimeout(function() {
+                        document.getElementById('progressContainer').style.display = 'none';
+                        document.querySelector('button[type="submit"]').textContent = "Опубликовать";
+                    }, 1000);
+                } else {
+                    alert('Ошибка при загрузке файлов.');
+                }
+            };
+
+            document.querySelector('button[type="submit"]').textContent = "Загрузка...";
+
+            xhr.send(formData);
+        });
+    </script>
+</body>
+</html>

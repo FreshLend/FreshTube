@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='ui/favicon.png') }}">
+    <title>Регистрация</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui/login.css') }}">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZB4E3QSLG"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-VZB4E3QSLG');
+    </script>
+
+</head>
+<body>
+    <div class="container">
+        <a style="font-size: 44px;" href="/">FreshTube</a>
+        <h1>Регистрация</h1>
+        <form action="{{ url_for('register') }}" method="post" enctype="multipart/form-data">
+            <div class="input">
+                <input type="text" name="nickname" placeholder="Никнейм" required>
+            </div>
+            <div class="input">
+                <input type="email" name="email" placeholder="Email" required>
+            </div>
+            <div class="input">
+                <input type="password" name="password" placeholder="Пароль" required>
+            </div>
+            <div class="input">
+                <h2>фото профиля</h2>
+                <input type="file" name="avatar" accept="image/*">
+            </div>
+            <div class="input">
+                <button type="submit" class="register-btn">Зарегистрироваться</button>
+            </div>
+            <h3><a href="{{ url_for('login') }}" class="login-link">Уже есть аккаунт?</a></h3>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Смотрите любимые видео, слушайте любимые песни, загружайте собственные ролики и делитесь ими с друзьями, близкими и целым миром.">
+    <meta name="keywords" content="FreshTube, видео, музыка, смотреть видео онлайн, слушать песни, загружать ролики, делиться видео, видео хостинг, лучшие видео, топ видео, видео платформа, музыка онлайн, музыкальные клипы">
+    <meta name="author" content="FreshLend Studio">
+    <meta name="copyright" content="FreshLend Studio">
+    <meta name="date" content="2025-02-03T01:08:00Z">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:title" content="FreshTube - Видео и музыка">
+    <meta property="og:description" content="Смотрите любимые видео, слушайте любимые песни, загружайте собственные ролики и делитесь ими с друзьями, близкими и целым миром.">
+    <meta property="og:image" content="{{ url_for('static', filename='ui/logo.png')}}">
+    <meta property="og:url" content="http://f1.aurorix.net:38052">
+    <meta property="og:type" content="website">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FreshTube - Видео и музыка">
+    <meta name="twitter:description" content="Смотрите любимые видео, слушайте любимые песни, загружайте собственные ролики и делитесь ими с друзьями, близкими и целым миром.">
+    <meta name="twitter:image" content="{{ url_for('static', filename='ui/logo.png')}}">
+    <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZB4E3QSLG"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-VZB4E3QSLG');
+    </script>
+
+    <title>FreshTube</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        .logo {
+            width: 128px;
+            height: 20px;
+            transform: scaleX(0.9) scaleY(1.2);
+        }
+
+        .container {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 600px;
+        }
+
+        h1 {
+            color: #ff5555;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .menu-items {
+            p {
+                font-size: 14px;
+            }
+            b {
+                font-size: 16px;
+            }
+        }
+
+        footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 15px 0;
+            background-color: #1e1e1e;
+            text-align: center;
+            color: #b0b0b0;
+            font-size: 14px;
+            border-top: 1px solid #333;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        footer:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+        footer p {
+            margin: 0;
+        }
+
+        footer a {
+            color: rgb(0, 153, 153);
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: #00ffea;
+        }
+
+        .user-menu {
+            display: none;
+            border-radius: 5%;
+            margin-left: 100px;
+        }
+
+        .user-icon {
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            margin-right: 20px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+            .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: auto;
+        }
+
+        .user-menu a {
+            color: #e0e0e0;
+        }
+        .upload {
+            position: absolute;
+            text-align: center;
+            line-height: 32px;
+            color: #e0e0e0;
+            font-size: 32px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            right: 0;
+            margin-right: 100px;
+        }
+
+        .upload:hover {
+            border-radius: 50%;
+            background-color: #272727;
+        }
+        .top-bar {
+            background-color: #0F0F0F;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .user-menu button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background-color: #333;
+            cursor: pointer;
+            display: flex;
+            color: white;
+        }
+
+        .user-menu button:hover {
+            background-color: #444;
+        }
+
+        .user-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-container img {
+            height: 40px;
+            width: 40px;
+            margin-bottom: 30px;
+            margin-right: 10px;
+        }
+
+        #user-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #333;
+            border: 1px solid #444;
+            padding: 10px;
+            z-index: 1000;
+            color: #e0e0e0;
+        }
+
+        .menu-items {
+            font-size: 14px;
+            margin-right: 20px;
+        }
+
+        .channel-link a {
+            font-size: 14px;
+            color: #3B96E5;
+        }
+
+        .menu-section {
+            margin-top: 10px;
+            border-top: 1px solid #535353;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/">
+            <img class="logo" src="{{ url_for('static', filename='ui/logo.png')}}" alt="logo">
+        </a>
+        {% if session.get('user_id') %}
+            <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+        {% else %}
+            <img src="{{ url_for('static', filename='ui/user.png') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+        {% endif %}
+        <div id="user-menu" class="user-menu">
+            {% if session.get('user_id') %}
+                <div class="user-container">
+                    <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
+                    <div class="menu-items">
+                        <b style="display: flex;">{{ user.nickname }}</b>
+                        <p style="margin-top: 5px; display: flex;">ID: {{ session.get('user_id') }}</p>
+                    </div>
+                </div>
+                <div class="channel-link">
+                    <a href="{{ url_for('channel', id=session.get('user_id')) }}">Посмотреть канал</a>
+                </div>
+                <div class="menu-section">
+                    <a href="{{ url_for('logout') }}"><button><b>Выйти</b></button></a>
+                </div>
+                <div class="menu-section">
+                    <a href="settings"><button><b>Настройки</b></button></a>
+                </div>
+            {% else %}
+                <a href="{{ url_for('login') }}"><button><b>Вход</b></button></a>
+                <a href="{{ url_for('register') }}"><button><b>Регистрация</b></button></a>
+            {% endif %}
+        </div>
+	</div>
+    <div class="container">
+        <h1>Доступ запрещён</h1>
+        <p>Ваш аккаунт заблокирован.<br>Свяжитесь с администратором сайта для получения дополнительной информации.</p>
+    </div>
+    <footer>
+        <p><strong>&copy; 2021-2025 FreshLend Studio. Все права защищены.</strong><br>Контактная информация:<br>Email: <a href="mailto:freshlend.studio@gmail.com">freshlend.studio@gmail.com</a><br>Discord: <a href="https://discord.com/invite/95EyHeZmMz">discord.com/invite/95EyHeZmMz</a></p>
+    </footer>
+    <script>
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
+    <title>Доступ запрещён</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        .logo {
+            width: 128px;
+            height: 20px;
+            transform: scaleX(0.9) scaleY(1.2);
+        }
+
+        .container {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 600px;
+        }
+
+        h1 {
+            color: #ff5555;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 15px 0;
+            background-color: #1e1e1e;
+            text-align: center;
+            color: #b0b0b0;
+            font-size: 14px;
+            border-top: 1px solid #333;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        footer:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+        footer p {
+            margin: 0;
+        }
+
+        footer a {
+            color: rgb(0, 153, 153);
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: #00ffea;
+        }
+
+        .user-icon {
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            margin-right: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-menu {
+            display: none;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: auto;
+        }
+
+        .user-menu a {
+            color: #e0e0e0;
+        }
+
+        .user-menu button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background-color: #333;
+            cursor: pointer;
+        }
+
+        .user-menu button:hover {
+            background-color: #444;
+        }
+        .upload {
+            position: absolute;
+            text-align: center;
+            line-height: 32px;
+            color: #e0e0e0;
+            font-size: 32px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            right: 0;
+            margin-right: 100px;
+        }
+
+        .upload:hover {
+            border-radius: 50%;
+            background-color: #272727;
+        }
+        .top-bar {
+            background-color: #0F0F0F;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        #user-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #333;
+            border: 1px solid #444;
+            padding: 10px;
+            z-index: 1000;
+            color: #e0e0e0;
+            margin-right: 20px;
+        }
+    </style>
+    <link id="material-icons-preload" rel="preload" href="https://fonts.googleapis.com/icon?family=Material+Icons" as="style">
+    <script>
+    window.addEventListener('load', function() {
+        var link = document.getElementById('material-icons-preload');
+        var newLink = document.createElement('link');
+        newLink.href = link.href;
+        newLink.rel = 'stylesheet';
+        document.head.appendChild(newLink);
+    });
+    </script>
+</head>
+<body>
+    <div class="top-bar">
+        <a href="/">
+            <img class="logo" src="{{ url_for('static', filename='ui/logo.png')}}">
+        </a>
+	</div>
+<div class="container">
+    <h1>Доступ запрещён</h1>
+    <p>Извините, но ваш IP-адрес заблокирован.<br>Свяжитесь с администратором сайта для получения дополнительной информации.</p>
+</div>
+<footer>
+    <p><strong>&copy; 2021-2025 FreshLend Studio. Все права защищены.</strong><br>Контактная информация:<br>Email: <a href="mailto:freshlend.studio@gmail.com">freshlend.studio@gmail.com</a><br>Discord: <a href="https://discord.com/invite/95EyHeZmMz">discord.com/invite/95EyHeZmMz</a></p>
+</footer>
+<script>
+    function toggleUserMenu() {
+        const menu = document.getElementById('user-menu');
+        menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+    }
+</script>
+</body>
+</html>
