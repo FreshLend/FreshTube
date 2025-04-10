@@ -3,29 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ url_for('static', filename='ui/favicon.png') }}">
+    <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
     <title>Регистрация</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='ui/login.css') }}">
-    
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZB4E3QSLG"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-VZB4E3QSLG');
-    </script>
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui/main_' + session.get('theme', 'black') + '.css') }}">
 </head>
-<body>
+<style>
+    body {
+        background: url('{{ url_for('static', filename='ui/BG5.jpg') }}') no-repeat;
+        background-position: center;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Roboto', sans-serif;
+    }
+    
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;700&display=swap');
+    * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        text-decoration: none;
+        outline: none;
+    }
+
+    a {
+        color: aqua;
+    }
+
+    
+</style>
+<body class="login_register">
     <div class="container">
         <a style="font-size: 44px;" href="/">FreshTube</a>
         <h1>Регистрация</h1>
         <form action="{{ url_for('register') }}" method="post" enctype="multipart/form-data">
-            <div class="input">
-                <input type="text" name="nickname" placeholder="Никнейм" required>
-            </div>
             <div class="input">
                 <input type="email" name="email" placeholder="Email" required>
             </div>

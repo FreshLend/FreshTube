@@ -2,7 +2,7 @@ from flask import Flask, request, redirect, url_for, render_template, send_from_
 from flask_session import Session
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-import shutil, requests, os, re, json
+import shutil, requests, os, re, json, random, string
 from datetime import datetime
 from PIL import Image
 
@@ -41,7 +41,7 @@ channels = load_data(CHANNEL_DATA_FILE)
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER_VIDEO'] = 'static/video'
 app.config['UPLOAD_FOLDER_IMG'] = 'static/imgs'
-app.config['MAX_CONTENT_LENGTH'] = 4096 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
 blocked_ips = ['']
 blocked_countries = ['']
@@ -158,7 +158,8 @@ def index():
         video['relative_time'] = time_ago(datetime.fromisoformat(video['upload_date']))
     user_id = session.get('user_id')
     user = next((u for u in users if u['id'] == user_id), None)
-    return render_template('index.html', videos=sorted_videos, user=user, user_id=user_id)
+    user_theme = session.get('theme', 'black')
+    return render_template('index.html', videos=sorted_videos, user=user, user_id=user_id, user_theme=user_theme)
 
 @app.route('/search')
 def search():
@@ -207,7 +208,7 @@ def load_more_videos():
 
 @app.route('/watch')
 def video():
-    video_id = request.args.get('si', type=int)
+    video_id = request.args.get('si', type=str)
     video = next((v for v in videos if v['id'] == video_id), None)
     if video is None:
         return "Видео не найдено.", 404
@@ -232,28 +233,34 @@ def video():
     user_id = session.get('user_id')
     user = next((u for u in users if u['id'] == user_id), None)
     video_user = next((u for u in users if u['id'] == video['user_id']), None)
-    formatted_subscribers = format_subscriber_count(channel['subs'])
+    subscribers = len(channel.get('subscribers', []))
+    formatted_subscribers = format_subscriber_count(subscribers)
     return render_template('watch.html', formatted_subscribers=formatted_subscribers, video=video, comments=video_comments, channel=channel, video_user=video_user, user=user)
 
 @app.route('/channel')
 def channel():
     user_id = request.args.get('id', type=int)
     if user_id is None:
-        return "Пользователь не найден", 404
-    user_channel = next((ch for ch in channels if ch['user_id'] == user_id), None)
-    if user_channel is None:
-        return "Канал не найден", 404
+        channel = {
+            'id': user_id, 'user_id': user_id, 'description': '???', 'subscribers': []}
+    channel = next((ch for ch in channels if ch['user_id'] == user_id), None)
+    if channel is None:
+        channel = {
+            'id': user_id, 'user_id': user_id, 'description': '???', 'subscribers': []}
     user = next((u for u in users if u['id'] == user_id), None)
-    if user:
-        user_channel['avatar'] = user.get('avatar', 'user.png')
-        user_channel['name'] = user.get('nickname', 'Неизвестный')
-    user_videos = [v for v in videos if v.get('channel_id') == user_channel['id']]
+    if user is None:
+        user = {
+            'id': user_id, 'nickname': '???', 'avatar': '../ui/user.png'}
+    channel['avatar'] = user.get('avatar', 'user.png')
+    channel['name'] = user.get('nickname', 'Неизвестный пользователь')
+    user_videos = [v for v in videos if v.get('channel_id') == channel['id']]
     user_videos.sort(key=lambda v: datetime.fromisoformat(v['upload_date']), reverse=True)
-    user_id = session.get('user_id')
     for video in user_videos:
         video['relative_time'] = time_ago(datetime.fromisoformat(video['upload_date']))
-    formatted_subscribers = format_subscriber_count(user_channel['subs'])
-    return render_template('channel.html', formatted_subscribers=formatted_subscribers, user=user, channel=user_channel, videos=user_videos, user_id=user_id)
+    subscribers = len(channel.get('subscribers', []))
+    formatted_subscribers = format_subscriber_count(subscribers)
+    return render_template('channel.html', user=user, channel=channel, videos=user_videos, formatted_subscribers=formatted_subscribers)
+
 
 @app.route('/settings')
 def settings():
@@ -265,13 +272,18 @@ def settings():
 def publish():
 	return render_template('publish.html')
 	
-@app.route('/Signin')
+@app.route('/signin')
 def signin():
 	return render_template('login.html')
 	
-@app.route('/Signup')
+@app.route('/signup')
 def signup():
 	return render_template('register.html')
+
+def generate_video_id(length=11):
+    """Функция для генерации случайного ID видео в стиле YouTube."""
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for _ in range(length))
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -294,9 +306,9 @@ def upload():
         return redirect(url_for('404'))
     channel_id = channel['id']
     if video_file and cover_file:
-        video_id = len(videos) + 1
-        video_filename = f"video_{video_id}.mp4"
-        cover_filename = f"cover_{video_id}.jpg"
+        video_id = generate_video_id()  # Генерация ID видео в стиле YouTube
+        video_filename = f"{video_id}.mp4"
+        cover_filename = f"{video_id}.jpg"
         try:
             video_file.save(os.path.join(app.config['UPLOAD_FOLDER_VIDEO'], video_filename))
             cover_path = os.path.join(app.config['UPLOAD_FOLDER_IMG'], cover_filename)
@@ -418,11 +430,8 @@ def subscribe():
         return "You cannot subscribe to your own channel", 400
     if user_id not in channel['subscribers']:
         channel['subscribers'].append(user_id)
-        channel['subs'] += 1
         save_data('channels.json', channels)
-    formatted_subscribers = format_subscriber_count(channel['subs'])
-    return redirect(request.referrer or url_for('channel', id=channel_id, formatted_subscribers=formatted_subscribers))
-
+    return redirect(request.referrer or url_for('channel', id=channel_id))
 
 @app.route('/unsubscribe', methods=['POST'])
 def unsubscribe():
@@ -437,12 +446,10 @@ def unsubscribe():
         return "You cannot unsubscribe from your own channel", 400
     if user_id in channel['subscribers']:
         channel['subscribers'].remove(user_id)
-        channel['subs'] -= 1
         save_data('channels.json', channels)
     else:
         return "You are not subscribed to this channel", 400
-    formatted_subscribers = format_subscriber_count(channel['subs'])
-    return redirect(request.referrer or url_for('channel', id=channel_id, formatted_subscribers=formatted_subscribers))
+    return redirect(request.referrer or url_for('channel', id=channel_id))
 
 @app.route('/add_comment', methods=['POST'])
 def add_comment():
@@ -506,15 +513,19 @@ def add_sub_comment():
 def custom_static(filename):
     return send_from_directory('static', filename)
 
+def generate_nickname():
+    length = random.randint(8, 32)
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        nickname = request.form.get('nickname')
         email = request.form.get('email')
         password = request.form.get('password')
         avatar = request.files.get('avatar')
-        if len(nickname) > 32:
-            return "Никнейм не может быть длиннее 32 символов", 400
+        nickname = generate_nickname()
+        while next((u for u in users if u['nickname'] == nickname), None):
+            nickname = generate_nickname()
         if next((u for u in users if u['email'] == email), None):
             return "Пользователь с таким email уже существует.", 400
         user_id = len(users) + 1
@@ -541,7 +552,9 @@ def register():
             'nickname': nickname,
             'email': email,
             'password': generate_password_hash(password),
-            'avatar': avatar_filename
+            'avatar': avatar_filename,
+            'group': "user",
+            'theme': "black"
         }
         users.append(new_user)
         save_data(USER_DATA_FILE, users)
@@ -549,8 +562,7 @@ def register():
             'id': len(channels) + 1,
             'user_id': new_user['id'],
             'description': "Без описания",
-            'subscribers': [],
-            'subs': 0
+            'subscribers': []
         }
         channels.append(new_channel)
         save_data(CHANNEL_DATA_FILE, channels)
@@ -566,6 +578,7 @@ def login():
         if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             session['avatar'] = user.get('avatar')
+            session['theme'] = user.get('theme', 'black')
             return redirect(url_for('index'))
         return "Неверный email или пароль.", 400
     return render_template('login.html')
@@ -635,5 +648,19 @@ def save_description():
     save_data(CHANNEL_DATA_FILE, channels)
     return redirect(url_for('channel', id=user_id))
 
+@app.route('/update_theme', methods=['POST'])
+def update_theme():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('register'))
+    new_theme = request.form.get('theme')
+    user = next((u for u in users if u['id'] == user_id), None)
+    if user:
+        user['theme'] = new_theme
+        save_data(USER_DATA_FILE, users)
+        session['theme'] = new_theme
+        return redirect(url_for('settings'))
+    return 'User not found', 404
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=43034, debug=True)
+    app.run(host='0.0.0.0', port=43034, ssl_context=('fullchain.crt', 'certificate.key'), debug=True)

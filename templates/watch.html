@@ -18,6 +18,7 @@
     <meta property="og:video:type" content="video/mp4">
     <meta property="og:video:width" content="1280">
     <meta property="og:video:height" content="720">
+    <meta property="og:video:secure_url" content="{{ video['video_url'] }}">
     <meta property="og:site_name" content="FreshTube">
 
     <meta name="twitter:card" content="player">
@@ -30,13 +31,13 @@
     <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
     
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZB4E3QSLG"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZYVP4ZFTP0"></script>
     <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
-    gtag('config', 'G-VZB4E3QSLG');
+    gtag('config', 'G-ZYVP4ZFTP0');
     </script>
 
     <title>{{ video['title'] }} - FreshTube</title>
@@ -57,7 +58,7 @@
         }
     }
     </script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='ui/watch.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui/main_' + session.get('theme', 'black') + '.css') }}">
     <link id="material-icons-preload" rel="preload" href="https://fonts.googleapis.com/icon?family=Material+Icons" as="style">
     <script>
     window.addEventListener('load', function() {
@@ -68,8 +69,15 @@
         document.head.appendChild(newLink);
     });
     </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+    </style>
 </head>
-<body>
+<body class="watch">
     <div class="top-bar">
         <a href="/">
             <img class="logo" src="{{ url_for('static', filename='ui/logo.png')}}">
@@ -111,14 +119,13 @@
             <div class="box">
                 <video id="video" controls>
                     <source src="{{ url_for('custom_static', filename='video/' + video.filename) }}" type="video/mp4">
-                    <track src="{{ url_for('static', filename='ui/captions_ru_1.vtt') }}" kind="captions" srclang="ru" label="Russian">
                     Your browser does not support the video tag.
                 </video>
                 <div style="height: 0px;" id="toggle-description" class="info">
                     <div class="title" style="word-wrap: break-word; overflow-wrap: break-word; white-space: normal; max-width: 100%;">
                         {{ video.title }}
                         <div>
-                            <div style="color: #adadad;" class="description-button">{{ video.relative_time }} <b style=" color: white;">Ещё</b></div>
+                            <div class="description-button">{{ video.relative_time }} <b class="description-q">Ещё</b></div>
                         </div>
                     </div>
                 </div>
@@ -135,7 +142,7 @@
                                     <span> Подписчиков: {{ formatted_subscribers }}</span>
                                 </p>
                             </a>
-                        </p>                        
+                        </p>
                         <div class="like-dislike-buttons">
                             <form action="/like_dislike" method="post" style="display: inline-block;">
                                 <input type="hidden" name="video_id" value="{{ video.id }}">
@@ -226,7 +233,7 @@
                 </div>
             </div>
             <div class="box" style="display: none;" id="description-section">
-                <div>
+                <div class="box_a">
                     <p>{{ video.description | safe }}</p>
                 </div>
             </div>

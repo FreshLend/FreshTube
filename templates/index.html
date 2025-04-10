@@ -13,7 +13,7 @@
     <meta property="og:title" content="FreshTube - Видео и музыка">
     <meta property="og:description" content="Смотрите любимые видео, слушайте любимые песни, загружайте собственные ролики и делитесь ими с друзьями, близкими и целым миром.">
     <meta property="og:image" content="{{ url_for('static', filename='ui/logo.png')}}">
-    <meta property="og:url" content="http://freshtube.ru:43034">
+    <meta property="og:url" content="https://freshtube.ru:43034">
     <meta property="og:type" content="website">
 
     <meta name="twitter:card" content="summary_large_image">
@@ -23,17 +23,17 @@
     <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
 
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZB4E3QSLG"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZYVP4ZFTP0"></script>
     <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
-    gtag('config', 'G-VZB4E3QSLG');
+    gtag('config', 'G-ZYVP4ZFTP0');
     </script>
 
     <title>FreshTube</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='ui/index.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='ui/main_' + session.get('theme', 'black') + '.css') }}">
 <link id="material-icons-preload" rel="preload" href="https://fonts.googleapis.com/icon?family=Material+Icons" as="style">
 <script>
 window.addEventListener('load', function() {
@@ -44,8 +44,18 @@ window.addEventListener('load', function() {
     document.head.appendChild(newLink);
 });
 </script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+</style>
 </head>
-<body>
+<body class="index">
     <div class="top-bar">
         <a href="/">
             <img class="logo" src="{{ url_for('static', filename='ui/logo.png')}}" alt="logo">
@@ -102,7 +112,7 @@ window.addEventListener('load', function() {
                 </li>
             {% endfor %}
         </ul>
-        <div id="loading" style="text-align:center; display:none;">
+        <div id="loading" style="text-align: center; display: none;">
             <div style="display: flex;">
                 <div class="loader-circle"></div>
                 <div class="loader-circle"></div>

@@ -13,7 +13,7 @@
     <meta property="og:title" content="FreshTube - Видео и музыка">
     <meta property="og:description" content="Смотрите любимые видео, слушайте любимые песни, загружайте собственные ролики и делитесь ими с друзьями, близкими и целым миром.">
     <meta property="og:image" content="{{ url_for('static', filename='ui/logo.png')}}">
-    <meta property="og:url" content="http://f1.aurorix.net:38052">
+    <meta property="og:url" content="https://freshtube.ru:43034">
     <meta property="og:type" content="website">
 
     <meta name="twitter:card" content="summary_large_image">
@@ -21,22 +21,10 @@
     <meta name="twitter:description" content="Смотрите любимые видео, слушайте любимые песни, загружайте собственные ролики и делитесь ими с друзьями, близкими и целым миром.">
     <meta name="twitter:image" content="{{ url_for('static', filename='ui/logo.png')}}">
     <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
-
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZB4E3QSLG"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-VZB4E3QSLG');
-    </script>
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui/main_' + session.get('theme', 'black') + '.css') }}">
     <title>Настройки - FreshTube</title>
     <style>
         body {
-            background-color: #121212;
-            color: #e0e0e0;
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -48,160 +36,9 @@
             justify-content: flex-start;
             gap: 20px;
         }
-
-        .logo {
-            width: 128px;
-            height: 20px;
-            transform: scaleX(0.9) scaleY(1.2);
-        }
-
-        .main-container {
-            margin-top: 60px;
-        }
-
-        .container {
-            background-color: #1e1e1e;
-            border-radius: 8px;
-            padding: 40px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-            width: 80%;
-            max-width: 600px;
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            font-size: 36px;
-            margin-bottom: 20px;
-        }
-
-        p {
-            font-size: 18px;
-            margin-bottom: 30px;
-        }
-
-        .menu-items {
-            p {
-                font-size: 14px;
-            }
-            b {
-                font-size: 16px;
-            }
-        }
-
-        .user-icon {
-            width: 32px;
-            height: 32px;
-            cursor: pointer;
-            margin-right: 20px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            overflow: hidden;
-            display: inline-block;
-            vertical-align: middle;
-        }
-
-        .user-avatar img {
-            width: 100%;
-            height: auto;
-        }
-
-        .user-menu a {
-            color: #e0e0e0;
-        }
-        .upload {
-            position: absolute;
-            text-align: center;
-            line-height: 32px;
-            color: #e0e0e0;
-            font-size: 32px;
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
-            right: 0;
-            margin-right: 100px;
-        }
-
-        .upload:hover {
-            border-radius: 50%;
-            background-color: #272727;
-        }
-        .top-bar {
-            background-color: #0F0F0F;
-            color: #e0e0e0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px;
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-            transition: transform 0.3s ease;
-        }
-
-        .user-menu button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            border: none;
-            background-color: #333;
-            cursor: pointer;
-            display: flex;
-            color: white;
-        }
-
-        .user-menu button:hover {
-            background-color: #444;
-        }
-
-        .user-container {
-            display: flex;
-            align-items: center;
-        }
-
-        .user-container img {
-            height: 40px;
-            width: 40px;
-            margin-bottom: 30px;
-            margin-right: 10px;
-        }
-
-        #user-menu {
-            display: none;
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: #333;
-            border: 1px solid #444;
-            padding: 10px;
-            z-index: 1000;
-            color: #e0e0e0;
-        }
-
-        .menu-items {
-            font-size: 14px;
-            margin-right: 20px;
-        }
-
-        .channel-link a {
-            font-size: 14px;
-            color: #3B96E5;
-        }
-
-        .menu-section {
-            margin-top: 10px;
-            border-top: 1px solid #535353;
-            padding-top: 10px;
-        }
     </style>
 </head>
-<body>
+<body class="settings">
     <div class="top-bar">
         <a href="/">
             <img class="logo" src="{{ url_for('static', filename='ui/logo.png')}}" alt="logo">
@@ -238,17 +75,38 @@
     <div class="main-container">
         <div class="container">
             <h1 style="color: #ff5555;">В разработке</h1>
-            <p>Настройки разрабатываются.<br>Так что эта страница будет просто пустой, пока что!<br><h2>Поддержать проект</h2>Поддержите проект пожертвовав <a style="color: rgb(0, 190, 0);" href="https://fpibank.com" target="_blank">FPI BANK</a> или TON: <p style="color: aqua;">UQB5zVG-ZlfJOTuCkReQxVr_3RDbcA9CO5eB8Mnh9TmsiH3W</p><br>Также можно и на <a style="color: rgb(216, 140, 0);" href="https://www.donationalerts.com/r/freshgame_" target="_blank">DonationAlerts</a> </p>
+            <p>Настройки разрабатываются.
+                <br>Так что эта страница будет просто пустой, пока что!<br>
+                <h2>Поддержать проект</h2>
+                <h2>на <a style="color: rgb(216, 140, 0);" href="https://www.donationalerts.com/r/freshgame_" target="_blank">DonationAlerts</a></h2><br>Также можно пожертвовав по приколу <a style="color: rgb(0, 190, 0);" href="https://fpibank.com" target="_blank">FPI BANK</a> или TON: <p style="color: rgb(0, 183, 255);">UQB5zVG-ZlfJOTuCkReQxVr_3RDbcA9CO5eB8Mnh9TmsiH3W</p>
+                <br>Всё уйдёт на оплату домена, ssl сертификата и хостинга.
+                <br>а если что то останется уйдёт на апгрейд железа или покупки белого айпи, чтоб не мучатся с хостингами.
+            </p>
         </div>
         <div class="container">
             <h1>Настройки</h1>
-            <p>Какая то настройка</p>
+            <div style="text-align: left;">
+                <h2>Сменить тему</h2>
+                <button class="theme-btn" id="white" onclick="changeTheme('white')">Светлая</button>
+                <button class="theme-btn" id="black" onclick="changeTheme('black')">Темная</button>
+                <form id="theme-form" action="/update_theme" method="POST" style="display: none;">
+                    <input type="hidden" name="theme" id="theme-input">
+                </form>
+            </div>
         </div>
     </div>
     <script>
         function toggleUserMenu() {
             const menu = document.getElementById('user-menu');
             menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+        }
+    </script>
+    <script>
+        function changeTheme(theme) {
+            document.querySelectorAll('.theme-btn').forEach(button => button.classList.remove('active'));
+            document.getElementById(theme).classList.add('active');
+            document.getElementById('theme-input').value = theme;
+            document.getElementById('theme-form').submit();
         }
     </script>
 </body>
