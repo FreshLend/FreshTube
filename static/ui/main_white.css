@@ -302,6 +302,10 @@ body {
     .comment-text {
         margin-top: -5px;
     }
+    
+    .comment-text a {
+        color: #3B96E5;
+    }
 
     .comment-text a {
         color: #3B96E5;
