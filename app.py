@@ -2,9 +2,12 @@ from flask import Flask, request, redirect, url_for, render_template, send_from_
 from flask_session import Session
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+import geoip2.database
 import shutil, requests, os, re, json, random, string
 from datetime import datetime
 from PIL import Image
+
+geoip2_db_path = 'static/ui/GeoLite2-Country.mmdb'
 
 VIDEO_DATA_FILE = 'video_data.json'
 USER_DATA_FILE = 'user_data.json'
@@ -39,7 +42,7 @@ comment_likes_dislikes_data = load_data(COMMENT_LIKES_DISLIKES_FILE)
 channels = load_data(CHANNEL_DATA_FILE)
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER_VIDEO'] = 'static/video'
+app.config['UPLOAD_FOLDER'] = 'static/users'
 app.config['UPLOAD_FOLDER_IMG'] = 'static/imgs'
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
@@ -97,11 +100,12 @@ def format_subscriber_count(count):
 
 def get_country_by_ip(ip):
     try:
-        response = requests.get(f'http://ip-api.com/json/{ip}')
-        data = response.json()
-        return data.get('countryCode', None)
+        with geoip2.database.Reader(geoip2_db_path) as reader:
+            response = reader.country(ip)
+            return response.country.iso_code
+    except geoip2.errors.AddressNotFoundError:
+        return None
     except Exception as e:
-        print(f"Ошибка при получении данных по IP {ip}: {e}")
         return None
 
 @app.before_request
@@ -111,9 +115,9 @@ def check_ip():
         return None
     if client_ip in blocked_ips:
         return render_template('ip_not_allowed.html')
-    #country_code = get_country_by_ip(client_ip)
-    #if country_code in blocked_countries:
-        #return render_template('ip_not_allowed.html')
+    country_code = get_country_by_ip(client_ip)
+    if country_code and country_code in blocked_countries:
+        return render_template('ip_not_allowed.html')
     return None
 
 @app.before_request
@@ -213,7 +217,6 @@ def video():
     if video is None:
         return "Видео не найдено.", 404
     video['relative_time'] = time_ago(datetime.fromisoformat(video['upload_date']))
-
     video_comments = [
         {
             **c,
@@ -221,6 +224,7 @@ def video():
         }
         for c in comments if c['video_id'] == video_id and 'user_id' in c
     ]
+    video_comments.sort(key=lambda c: c['likes'], reverse=True)
     for comment in video_comments:
         comment['sub_comments'] = [
             {
@@ -239,28 +243,28 @@ def video():
 
 @app.route('/channel')
 def channel():
-    user_id = request.args.get('id', type=int)
-    if user_id is None:
-        channel = {
-            'id': user_id, 'user_id': user_id, 'description': '???', 'subscribers': []}
-    channel = next((ch for ch in channels if ch['user_id'] == user_id), None)
+    channel_id = request.args.get('id', type=str)
+    if channel_id is None:
+        return "Канал не найден", 404
+    channel = next((ch for ch in channels if ch['id'] == channel_id), None)
     if channel is None:
-        channel = {
-            'id': user_id, 'user_id': user_id, 'description': '???', 'subscribers': []}
+        return "Канал не найден", 404
+    user_id = channel['user_id']
     user = next((u for u in users if u['id'] == user_id), None)
-    if user is None:
-        user = {
-            'id': user_id, 'nickname': '???', 'avatar': '../ui/user.png'}
-    channel['avatar'] = user.get('avatar', 'user.png')
-    channel['name'] = user.get('nickname', 'Неизвестный пользователь')
+    if user:
+        channel['avatar'] = user.get('avatar', 'user.png')
+        channel['name'] = user.get('nickname', 'Неизвестный')
+    else:
+        channel['avatar'] = 'user.png'
+        channel['name'] = 'Неизвестный'
     user_videos = [v for v in videos if v.get('channel_id') == channel['id']]
     user_videos.sort(key=lambda v: datetime.fromisoformat(v['upload_date']), reverse=True)
     for video in user_videos:
         video['relative_time'] = time_ago(datetime.fromisoformat(video['upload_date']))
     subscribers = len(channel.get('subscribers', []))
     formatted_subscribers = format_subscriber_count(subscribers)
-    return render_template('channel.html', user=user, channel=channel, videos=user_videos, formatted_subscribers=formatted_subscribers)
-
+    user_id_from_session = session.get('user_id')
+    return render_template('channel.html', formatted_subscribers=formatted_subscribers, user=user, channel=channel, videos=user_videos, user_id=user_id_from_session)
 
 @app.route('/settings')
 def settings():
@@ -281,7 +285,6 @@ def signup():
 	return render_template('register.html')
 
 def generate_video_id(length=11):
-    """Функция для генерации случайного ID видео в стиле YouTube."""
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for _ in range(length))
 
@@ -306,12 +309,22 @@ def upload():
         return redirect(url_for('404'))
     channel_id = channel['id']
     if video_file and cover_file:
-        video_id = generate_video_id()  # Генерация ID видео в стиле YouTube
+        video_id = generate_video_id()
         video_filename = f"{video_id}.mp4"
         cover_filename = f"{video_id}.jpg"
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], f'user_{user_id}')
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+        video_folder = os.path.join(user_folder, 'videos')
+        img_folder = os.path.join(user_folder, 'imgs')
+        if not os.path.exists(video_folder):
+            os.makedirs(video_folder)
+        if not os.path.exists(img_folder):
+            os.makedirs(img_folder)
         try:
-            video_file.save(os.path.join(app.config['UPLOAD_FOLDER_VIDEO'], video_filename))
-            cover_path = os.path.join(app.config['UPLOAD_FOLDER_IMG'], cover_filename)
+            video_path = os.path.join(video_folder, video_filename)
+            video_file.save(video_path)
+            cover_path = os.path.join(img_folder, cover_filename)
             cover_file.save(cover_path)
             with Image.open(cover_path) as img:
                 img = img.resize((640, 360))
@@ -321,8 +334,8 @@ def upload():
             new_video = {
                 'id': video_id,
                 'user_id': user_id,
-                'filename': video_filename,
-                'cover': cover_filename,
+                'filename': f"user_{user_id}/videos/{video_filename}",
+                'cover': f"user_{user_id}/imgs/{cover_filename}",
                 'title': title,
                 'description': formatted_description,
                 "channel_id": channel_id,
@@ -339,7 +352,7 @@ def upload():
 
 @app.route('/like_dislike', methods=['POST'])
 def like_dislike():
-    video_id = int(request.form['video_id'])
+    video_id = str(request.form['video_id'])
     action = request.form['action']
     user_id = session.get('user_id')
     if not user_id or not any(user['id'] == user_id for user in users):
@@ -420,7 +433,7 @@ def vote():
 @app.route('/subscribe', methods=['POST'])
 def subscribe():
     user_id = session.get('user_id')
-    channel_id = int(request.form['channel_id'])
+    channel_id = str(request.form['channel_id'])
     if not user_id or not any(user['id'] == user_id for user in users):
         return redirect(url_for('register'))
     channel = next((c for c in channels if c['id'] == channel_id), None)
@@ -436,7 +449,7 @@ def subscribe():
 @app.route('/unsubscribe', methods=['POST'])
 def unsubscribe():
     user_id = session.get('user_id')
-    channel_id = int(request.form['channel_id'])
+    channel_id = str(request.form['channel_id'])
     if not user_id or not any(user['id'] == user_id for user in users):
         return redirect(url_for('register'))
     channel = next((c for c in channels if c['id'] == channel_id), None)
@@ -457,11 +470,12 @@ def add_comment():
     if 'user_id' not in session:
         return redirect(url_for('register'))
     user_id = session['user_id']
-    video_id = request.form.get('video_id', type=int)
+    video_id = request.form.get('video_id', type=str)
     comment_text = request.form.get('comment')
     if not video_id or not comment_text:
         return "Недостаточно данных для добавления комментария.", 400
     user = next((u for u in users if u['id'] == user_id), None)
+    channel_id = next((ch for ch in channels if ch['user_id'] == user['id']), None)
     if user is None:
         return "Пользователь не найден.", 404
     def generate_comment_id():
@@ -473,6 +487,7 @@ def add_comment():
         'id': new_comment_id,
         'video_id': video_id,
         'user_id': user_id,
+        'channel_link_id': channel_id,
         'text': format_comment_text(comment_text),
         'likes': 0,
         'dislikes': 0,
@@ -491,6 +506,7 @@ def add_sub_comment():
     parent_id = int(request.form['parent_id'])
     text = request.form['text']
     user = next((u for u in users if u['id'] == user_id), None)
+    channel_id = next((ch for ch in channels if ch['user_id'] == user['id']), None)
     if user is None:
         return "Пользователь не найден.", 404
     def generate_sub_comment_id(parent_comment):
@@ -503,6 +519,7 @@ def add_sub_comment():
         sub_comment = {
             'id': new_sub_comment_id,
             'user_id': user_id,
+            'channel_link_id': channel_id,
             'text': text
         }
         parent_comment['sub_comments'].append(sub_comment)
@@ -514,7 +531,11 @@ def custom_static(filename):
     return send_from_directory('static', filename)
 
 def generate_nickname():
-    length = random.randint(8, 32)
+    length = random.randint(1, 50)
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+def generate_channel_id():
+    length = random.randint(3, 30)
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -524,9 +545,12 @@ def register():
         password = request.form.get('password')
         avatar = request.files.get('avatar')
         nickname = generate_nickname()
-        while next((u for u in users if u['nickname'] == nickname), None):
+        channel_id = generate_channel_id()
+        while any(u['nickname'] == nickname for u in users):
             nickname = generate_nickname()
-        if next((u for u in users if u['email'] == email), None):
+        while any(u['id'] == channel_id for u in channels):
+            channel_id = generate_channel_id()
+        if any(u['email'] == email for u in users):
             return "Пользователь с таким email уже существует.", 400
         user_id = len(users) + 1
         avatar_filename = f"avatar_{user_id}.jpg"
@@ -559,7 +583,7 @@ def register():
         users.append(new_user)
         save_data(USER_DATA_FILE, users)
         new_channel = {
-            'id': len(channels) + 1,
+            'id': channel_id,
             'user_id': new_user['id'],
             'description': "Без описания",
             'subscribers': []
@@ -575,8 +599,10 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
         user = next((u for u in users if u['email'] == email), None)
+        channel = next((ch for ch in channels if ch['user_id'] == user['id']), None)
         if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
+            session['channel_id'] = channel['id']
             session['avatar'] = user.get('avatar')
             session['theme'] = user.get('theme', 'black')
             return redirect(url_for('index'))
@@ -615,7 +641,12 @@ def save_avatar():
         save_data('user_data.json', users)
     else:
         return "User not found", 404
-    return redirect(url_for('channel', id=user_id))
+    user_channel = next((ch for ch in channels if ch['user_id'] == user_id), None)
+    if user_channel:
+        channel_id = user_channel['id']
+        return redirect(url_for('channel', id=channel_id))
+    else:
+        return "Channel not found", 404
 
 @app.route('/save-nickname', methods=['POST'])
 def save_nickname():
@@ -623,13 +654,18 @@ def save_nickname():
         return redirect(url_for('register'))
     user_id = session['user_id']
     new_nickname = request.form.get('nickname')
-    if len(new_nickname) > 32:
-        return "Никнейм не может быть длиннее 32 символов", 400
+    if len(new_nickname) > 50:
+        return "Никнейм не может быть длиннее 50 символов", 400
     user = next((u for u in users if u['id'] == user_id), None)
     if user:
         user['nickname'] = new_nickname
         save_data('user_data.json', users)
-        return redirect(url_for('channel', id=user_id))
+        user_channel = next((ch for ch in channels if ch['user_id'] == user_id), None)
+        if user_channel:
+            channel_id = user_channel['id']
+            return redirect(url_for('channel', id=channel_id))
+        else:
+            return "Channel not found", 404
     else:
         return "User not found", 404
 
@@ -646,7 +682,7 @@ def save_description():
         return "Канал не найден", 404
     user_channel['description'] = description
     save_data(CHANNEL_DATA_FILE, channels)
-    return redirect(url_for('channel', id=user_id))
+    return redirect(url_for('channel', id=user_channel['id']))
 
 @app.route('/update_theme', methods=['POST'])
 def update_theme():
@@ -663,4 +699,4 @@ def update_theme():
     return 'User not found', 404
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=43034, ssl_context=('fullchain.crt', 'certificate.key'), debug=True)
+    app.run(host='0.0.0.0', port=43034, debug=True) # ssl_context=("fullchain.crt", "certificate.key"),
