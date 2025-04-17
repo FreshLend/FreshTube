@@ -94,11 +94,11 @@
                         <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
                         <div class="menu-items">
                             <b>{{ user.nickname }}</b>
-                            <p style="margin-top: 5px;">ID: {{ session.get('user_id') }}</p>
+                            <p style="margin-top: 5px;">ID: {{ session.get('channel_id') }}</p>
                         </div>
                     </div>
                     <div class="channel-link">
-                        <a href="{{ url_for('channel', id=session.get('user_id')) }}">Посмотреть канал</a>
+                        <a href="{{ url_for('channel', id=session.get('channel_id')) }}">Посмотреть канал</a>
                     </div>
                     <div class="menu-section">
                         <a href="{{ url_for('logout') }}"><button><b>Выйти</b></button></a>
@@ -118,7 +118,7 @@
         <div class="left-container">
             <div class="box">
                 <video id="video" controls>
-                    <source src="{{ url_for('custom_static', filename='video/' + video.filename) }}" type="video/mp4">
+                    <source src="{{ url_for('custom_static', filename='users/' + video.filename) }}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
                 <div style="height: 0px;" id="toggle-description" class="info">
@@ -188,7 +188,7 @@
                 <div class="comment-list" id="comments">
                     {% for comment in comments %}
                         <div class="comment">
-                            <a href="{{ url_for('channel', id=comment.user_id) }}">
+                            <a href="{{ url_for('channel', id=comment.channel_link_id) }}">
                                 <img src="{{ url_for('static', filename='imgs/' + comment.user.avatar) }}" alt="Avatar" class="avatar">
                             </a>
                             <div class="comment-content">
@@ -208,7 +208,7 @@
                                 <div style="margin-top: 10px;" class="sub-comments" id="sub-comments-{{ comment.id }}">
                                     {% for sub_comment in comment.sub_comments %}
                                         <div class="sub-comment">
-                                            <a href="{{ url_for('channel', id=sub_comment.user_id) }}">
+                                            <a href="{{ url_for('channel', id=sub_comment.channel_link_id) }}">
                                                 <img src="{{ url_for('static', filename='imgs/' + sub_comment.user.avatar) }}" alt="Avatar" class="avatar">
                                             </a>
                                             <div class="comment-content">
@@ -234,6 +234,7 @@
             </div>
             <div class="box" style="display: none;" id="description-section">
                 <div class="box_a">
+																<p>Описание</p>
                     <p>{{ video.description | safe }}</p>
                 </div>
             </div>

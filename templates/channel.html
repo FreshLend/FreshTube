@@ -72,11 +72,11 @@ window.addEventListener('load', function() {
                         <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
                         <div class="menu-items">
                             <b>{{ user.nickname }}</b>
-                            <p style="margin-top: 5px;">ID: {{ session.get('user_id') }}</p>
+                            <p style="margin-top: 5px;">ID: {{ session.get('channel_id') }}</p>
                         </div>
                     </div>
                     <div class="channel-link">
-                        <a href="{{ url_for('channel', id=session.get('user_id')) }}">Посмотреть канал</a>
+                        <a href="{{ url_for('channel', id=session.get('channel_id')) }}">Посмотреть канал</a>
                     </div>
                     <div class="menu-section">
                         <a href="{{ url_for('logout') }}"><button><b>Выйти</b></button></a>
@@ -96,7 +96,7 @@ window.addEventListener('load', function() {
         <img class="avatar" src="{{ url_for('static', filename='imgs/' + channel.avatar) }}" alt="{{ channel.name }}'s avatar" onclick="toggleEditForm('edit-avatar-form')">
         <div class="header-content">
             <h2 onclick="toggleEditForm('edit-name-form')">{{ channel.name }}</h2>
-            <p style="margin-top: 5px;">ID:{{ channel.user_id }} • {{ formatted_subscribers }} подписчиков</p>
+            <p style="margin-top: 5px;">ID:{{ channel.id }} • {{ formatted_subscribers }} подписчиков</p>
             <p onclick="toggleEditForm('edit-description-form')">{{ channel.description }}</p>
             <div class="subscribe-button">
                 {% if user_id is not none %}
@@ -146,7 +146,7 @@ window.addEventListener('load', function() {
             </div>   
             {% endif %}
         {% else %}
-    {% endif %} 
+    {% endif %}
     
     {% if user_id is not none %}
         {% if user_id == channel.user_id %}
@@ -166,7 +166,7 @@ window.addEventListener('load', function() {
             {% for video in videos %}
                 <li class="video-item" data-title="{{ video.title }}" data-description="{{ video.description }}">
                     <a href="{{ url_for('video', si=video.id) }}">
-                        <img class="video-thumbnail" src="{{ url_for('static', filename='imgs/' + video.cover) }}" width="640" height="360" alt="Cover">
+                        <img class="video-thumbnail" src="{{ url_for('static', filename='users/' + video.cover) }}" width="640" height="360" alt="Cover">
                         <div class="video-title">
                             <h3><strong>{{ video.title }}</strong></h3>
                         </div>

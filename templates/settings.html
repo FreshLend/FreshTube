@@ -54,7 +54,7 @@
                     <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
                     <div class="menu-items">
                         <b style="display: flex;">{{ user.nickname }}</b>
-                        <p style="margin-top: 5px; display: flex;">ID: {{ session.get('user_id') }}</p>
+                        <p style="margin-top: 5px; display: flex;">ID: {{ session.get('channel_id') }}</p>
                     </div>
                 </div>
                 <div class="channel-link">

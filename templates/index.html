@@ -77,11 +77,11 @@ window.addEventListener('load', function() {
                     <img src="{{ url_for('static', filename='imgs/avatar_' + (session.get('user_id') | string if session.get('user_id') else none) + '.jpg') }}" alt="User Icon" class="user-icon" onclick="toggleUserMenu()">
                     <div class="menu-items">
                         <b>{{ user.nickname }}</b>
-                        <p style="margin-top: 5px;">ID: {{ session.get('user_id') }}</p>
+                        <p style="margin-top: 5px;">ID: {{ session.get('channel_id') }}</p>
                     </div>
                 </div>
                 <div class="channel-link">
-                    <a href="{{ url_for('channel', id=session.get('user_id')) }}">Посмотреть канал</a>
+                    <a href="{{ url_for('channel', id=session.get('channel_id')) }}">Посмотреть канал</a>
                 </div>
                 <div class="menu-section">
                     <a href="{{ url_for('logout') }}"><button><b>Выйти</b></button></a>
@@ -101,7 +101,7 @@ window.addEventListener('load', function() {
             {% for video in videos[:24] %}
                 <li class="video-item" data-title="{{ video.title }}" data-description="{{ video.description }}">
                     <a href="{{ url_for('video', si=video.id) }}">
-                        <img class="video-thumbnail" src="{{ url_for('static', filename='imgs/' + video.cover) }}" alt="Cover">
+                        <img class="video-thumbnail" src="{{ url_for('static', filename='users/' + video.cover) }}" alt="Cover">
                         <div class="video-title">
                             <h3><strong>{{ video.title }}</strong></h3>
                         </div>
@@ -144,7 +144,7 @@ window.addEventListener('load', function() {
                         li.setAttribute('data-description', video.description);
                         li.innerHTML = `
                             <a href="/watch?si=${video.id}">
-                                <img class="video-thumbnail" src="${staticUrl}imgs/${video.cover}" alt="Cover">
+                                <img class="video-thumbnail" src="${staticUrl}users/${video.cover}" alt="Cover">
                                 <div class="video-title">
                                     <h3><strong>${video.title}</strong></h3>
                                 </div>
@@ -205,8 +205,8 @@ window.addEventListener('load', function() {
     <div class="modal-content">
         <button class="close-btn" onclick="closeModal()">X</button>
         <h2>FreshTube - НАХОДИТСЯ В ОТКРЫТОМ АЛЬФА ТЕСТЕ</h2>
-        <p>Мы не можем гарантировать сохранность ваших опубликованных видео.<br>Из-за крупных обновлений может измениться ID приведу пример с текущего "1234" на "1aB-u33F" в видео и каналах, что приведет к исчезновению ваших зарегистрированных аккаунтов.<br>Однако вы всегда сможете зарегистрироваться снова, и мы постараемся сохранить ваши видео и аккаунты, если это будет возможно.</p>
-        <p>Не стоит переживать, обновление произойдёт после того, как мы перенесём весь необходимый функционал и дизайн с YouTube.<br>Этот процесс может занять значительное время... может даже вечность, так как <a href="/channel?id=1">разработчик один</a>.<br>Однако, возможно, ID видео изменятся раньше, чем новый функционал и дизайн, так как это крайне важно для других функций и улучшений, как для нас, так и для пользователей.</p>
+        <p>Мы не можем гарантировать сохранность ваших опубликованных видео.<br>Из-за крупных обновлений может что то измениться что не возможно будет интегрировать в новую систему<br>Однако мы постараемся сохранить ваши видео и аккаунты, если это будет возможно.</p>
+        <p>Мы переносим весь необходимый функционал и дизайн с YouTube.<br>Этот процесс может занять значительное время... может даже вечность, так как <a href="/channel?id=1">разработчик один</a>.</p>
     </div>
 </div>
 
