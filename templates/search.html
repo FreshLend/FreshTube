@@ -83,7 +83,7 @@ window.addEventListener('load', function() {
             {% for video in videos[:24] %}
                 <li class="video-item" data-title="{{ video.title }}" data-description="{{ video.description }}">
                     <a href="{{ url_for('video', si=video.id) }}">
-                        <img class="video-thumbnail" src="{{ url_for('static', filename='users/' + video.cover) }}" alt="Cover">
+                        <img class="video-thumbnail" src="{{ url_for('static', filename='users/' + video.cover) }}" width="640" height="360" alt="Cover">
                         <div style="display: flex; flex-direction: column;">
                             <div class="video-title">
                                 <h3><strong>{{ video.title }}</strong></h3>
@@ -139,7 +139,7 @@ window.addEventListener('load', function() {
                             li.setAttribute('data-description', video.description);
                             li.innerHTML = `
                                 <a href="/watch?si=${video.id}">
-                                    <img class="video-thumbnail" src="${staticUrl}imgs/${video.cover}" alt="Cover">
+                                    <img class="video-thumbnail" src="${staticUrl}imgs/${video.cover}" width="640" height="360" alt="Cover">
                                     <div style="display: flex; flex-direction: column;">
                                         <div class="video-title">
                                             <h3><strong>${video.title}</strong></h3>
@@ -177,7 +177,7 @@ window.addEventListener('load', function() {
             if (event.key === 'Enter') {
                 var query = document.querySelector('input[type="text"]').value.trim();
                 if (query) {
-                    var searchUrl = '/search?query=' + encodeURIComponent(query);
+                    var searchUrl = '/search?q=' + encodeURIComponent(query);
                     window.location.href = searchUrl;
                 }
             }

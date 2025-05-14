@@ -10,6 +10,19 @@
         body {
             font-family: Arial, sans-serif;
         }
+    .video-title h3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0;
+        font-size: 1.2em;
+        line-height: 1.5em;
+        text-align: left;
+        width: 100%;
+        }
+    
     </style>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
@@ -51,6 +64,37 @@
             <div id="estimatedTimeText" style="text-align: center; margin-top: 10px;">Ожидаемое время: 0 сек</div>
         </div>
     </div>
+    
+<h2>Предпросмотр</h2>
+<ul id="video-list" class="video-list">
+    <li class="video-item" style="display: inline;">
+           <img class="video-thumbnail" style="display: none;" id="imagePreview" src="" max-width="640" max-height="360" width="640" height="360" alt="Cover">
+           <div class="video-title">
+                 <h3><strong id="preview-title"></strong></h3>
+           </div>
+           <div>
+                <b><span style="font-size: 18px;" class="material-icons">thumb_up</span> 0 <span style="font-size: 18px;" class="material-icons">thumb_down</span> 0 • 1 секунду назад</b>
+          </div>
+     </li>
+     <li class="video-item" style="display: inline;">
+           <img class="video-thumbnail" style="display: none;" id="imagePreview1" src="" max-width="640" max-height="360" width="640" height="360" alt="Cover">
+           <div class="video-title">
+                 <h3><strong id="preview-title1"></strong></h3>
+           </div>
+           <div>
+                <b><span style="font-size: 18px;" class="material-icons">thumb_up</span> 0 <span style="font-size: 18px;" class="material-icons">thumb_down</span> 0 • 1 секунду назад</b>
+          </div>
+     </li>
+     <li class="video-item" style="display: inline;">
+           <img class="video-thumbnail" style="display: none;" id="imagePreview2" src="" max-width="640" max-height="360" width="640" height="360" alt="Cover">
+           <div class="video-title">
+                 <h3><strong id="preview-title2"></strong></h3>
+           </div>
+           <div>
+                <b><span style="font-size: 18px;" class="material-icons">thumb_up</span> 0 <span style="font-size: 18px;" class="material-icons">thumb_down</span> 0 • 1 секунду назад</b>
+          </div>
+     </li>
+</ul>
 
     <script>
         function toggleUserMenu() {
@@ -58,6 +102,31 @@
             menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
         }
     </script>
+    
+<script>
+    document.getElementById('cover').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('imagePreview').style.display = 'block';
+                document.getElementById('imagePreview1').src = e.target.result;
+                document.getElementById('imagePreview1').style.display = 'block';
+                document.getElementById('imagePreview2').src = e.target.result;
+                document.getElementById('imagePreview2').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    const titleInput = document.getElementById('title');
+    titleInput.addEventListener('input', function() {
+        document.getElementById('preview-title').textContent = '' + titleInput.value;
+        document.getElementById('preview-title1').textContent = '' + titleInput.value;
+        document.getElementById('preview-title2').textContent = '' + titleInput.value;
+    });
+</script>
 
     <script>
         document.getElementById('uploadForm').addEventListener('submit', function(event) {
@@ -144,4 +213,4 @@
         });
     </script>
 </body>
-</html>
+</html> 

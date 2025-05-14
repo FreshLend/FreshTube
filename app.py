@@ -52,6 +52,9 @@ blocked_accs = ['']
 
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SECRET_KEY'] = '32768:8:1$ZCprqFWU8MweZXkZ$f119a37b478e0374c6602cbf23fb5d45f82d92ce50f8482e566c1728a379fac28bde089db3c88c5af0138c6d4d6cb58bf4dcab1e5a6f13dccb501ef9c47839de'
+app.config['SESSION_COOKIE_DOMAIN'] = '127.0.0.1'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = True
 Session(app)
 
 def format_comment_text(text):
@@ -146,6 +149,10 @@ def format_number(number):
 @app.route('/robots.txt')
 def robots():
     return render_template('robots.txt')
+    
+@app.route('/sitemap.xml')
+def sitemap():
+    return render_template('sitemap.xml')
 
 @app.route('/ip_not_allowed.html')
 def ip_not_allowed():
@@ -167,7 +174,7 @@ def index():
 
 @app.route('/search')
 def search():
-    query = request.args.get('query', '').strip().lower()
+    query = request.args.get('q', '').strip().lower()
     
     if query:
         filtered_videos = [
@@ -311,7 +318,7 @@ def upload():
     if video_file and cover_file:
         video_id = generate_video_id()
         video_filename = f"{video_id}.mp4"
-        cover_filename = f"{video_id}.jpg"
+        cover_filename = f"{video_id}.webp"
         user_folder = os.path.join(app.config['UPLOAD_FOLDER'], f'user_{user_id}')
         if not os.path.exists(user_folder):
             os.makedirs(user_folder)
@@ -325,11 +332,10 @@ def upload():
             video_path = os.path.join(video_folder, video_filename)
             video_file.save(video_path)
             cover_path = os.path.join(img_folder, cover_filename)
-            cover_file.save(cover_path)
-            with Image.open(cover_path) as img:
+            with Image.open(cover_file) as img:
                 img = img.resize((640, 360))
                 img = img.convert("RGB")
-                img.save(cover_path, format='JPEG')
+                img.save(cover_path, format='WebP')
             upload_date = datetime.now().isoformat()
             new_video = {
                 'id': video_id,

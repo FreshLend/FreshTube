@@ -7,7 +7,7 @@
     <meta name="keywords" content="FreshTube, видео, музыка, смотреть видео онлайн, слушать песни, загружать ролики, делиться видео, видео хостинг, лучшие видео, топ видео, видео платформа, музыка онлайн, музыкальные клипы">
     <meta name="author" content="FreshLend Studio">
     <meta name="copyright" content="FreshLend Studio">
-    <meta name="date" content="2025-02-03T01:08:00Z">
+    <meta name="date" content="2025-04-28T01:00:00Z">
     <meta name="robots" content="index, follow">
 
     <meta property="og:title" content="FreshTube - Видео и музыка">
@@ -19,7 +19,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="FreshTube - Видео и музыка">
     <meta name="twitter:description" content="Смотрите любимые видео, слушайте любимые песни, загружайте собственные ролики и делитесь ими с друзьями, близкими и целым миром.">
-    <meta name="twitter:image" content="{{ url_for('static', filename='ui/logo.png')}}">
+    <meta name="twitter:image" content="{{ url_for('static', filename='ui/favicon.ico')}}">
     <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
 
     <!-- Google tag (gtag.js) -->
@@ -101,7 +101,7 @@ window.addEventListener('load', function() {
             {% for video in videos[:24] %}
                 <li class="video-item" data-title="{{ video.title }}" data-description="{{ video.description }}">
                     <a href="{{ url_for('video', si=video.id) }}">
-                        <img class="video-thumbnail" src="{{ url_for('static', filename='users/' + video.cover) }}" alt="Cover">
+                        <img class="video-thumbnail" src="{{ url_for('static', filename='users/' + video.cover) }}" width="640" height="360" alt="Cover">
                         <div class="video-title">
                             <h3><strong>{{ video.title }}</strong></h3>
                         </div>
@@ -144,7 +144,7 @@ window.addEventListener('load', function() {
                         li.setAttribute('data-description', video.description);
                         li.innerHTML = `
                             <a href="/watch?si=${video.id}">
-                                <img class="video-thumbnail" src="${staticUrl}users/${video.cover}" alt="Cover">
+                                <img class="video-thumbnail" src="${staticUrl}users/${video.cover}" width="640" height="360" alt="Cover">
                                 <div class="video-title">
                                     <h3><strong>${video.title}</strong></h3>
                                 </div>
@@ -187,7 +187,7 @@ window.addEventListener('load', function() {
             if (event.key === 'Enter') {
                 var query = document.querySelector('input[type="text"]').value.trim();
                 if (query) {
-                    var searchUrl = '/search?query=' + encodeURIComponent(query);
+                    var searchUrl = '/search?q=' + encodeURIComponent(query);
                     window.location.href = searchUrl;
                 }
             }

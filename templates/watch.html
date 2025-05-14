@@ -12,9 +12,9 @@
     <meta property="og:title" content="{{ video['title'] }}">
     <meta property="og:description" content="{{ video['description'] }}">
     <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:image" content="{{ video['thumbnail_url'] }}">
+    <meta property="og:image" content="{{ url_for('custom_static', filename='users/' + video.cover) }}">
     <meta property="og:type" content="video.other">
-    <meta property="og:video" content="{{ video['video_url'] }}">
+    <meta property="og:video" content="{{ url_for('custom_static', filename='users/' + video.filename) }}">
     <meta property="og:video:type" content="video/mp4">
     <meta property="og:video:width" content="1280">
     <meta property="og:video:height" content="720">
@@ -24,8 +24,8 @@
     <meta name="twitter:card" content="player">
     <meta name="twitter:title" content="{{ video['title'] }}">
     <meta name="twitter:description" content="{{ video['description'] }}">
-    <meta name="twitter:image" content="{{ video['thumbnail_url'] }}">
-    <meta name="twitter:player" content="{{ video['video_url'] }}">
+    <meta name="twitter:image" content="{{ url_for('custom_static', filename='users/' + video.cover) }}">
+    <meta name="twitter:player" content="{{ url_for('custom_static', filename='users/' + video.filename) }}">
     <meta name="twitter:player:width" content="1280">
     <meta name="twitter:player:height" content="720">
     <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
@@ -47,8 +47,8 @@
         "@type": "VideoObject",
         "name": "{{ video['title'] }}",
         "description": "{{ video['description'] }}",
-        "thumbnailUrl": "{{ video['thumbnail_url'] }}",
-        "contentUrl": "{{ video['video_url'] }}",
+        "thumbnailUrl": "{{ url_for('custom_static', filename='users/' + video.cover) }}",
+        "contentUrl": "{{ url_for('custom_static', filename='users/' + video.filename) }}",
         "uploadDate": "{{ video['upload_date'] }}",
         "duration": "{{ video['duration'] }}",
         "publisher": {
@@ -175,6 +175,7 @@
             </div>
         <div class="right-container">
             <div class="box" id="comment1-section">
+                <h2>Коментарии</h2>
                 <div class="comments" style="display: block;" id="comments">
                     <form action="/add_comment" method="post">
                         <textarea name="comment" placeholder="Добавьте комментарий..." required></textarea>
@@ -233,9 +234,11 @@
                 </div>
             </div>
             <div class="box" style="display: none;" id="description-section">
-                <div class="box_a">
-																<p>Описание</p>
-                    <p>{{ video.description | safe }}</p>
+                <div class="scroll-container">
+                  <div class="box_a">
+  															              <h2>Описание</h2>
+                      <p>{{ video.description | safe }}</p>
+                  </div>
                 </div>
             </div>
         </div>
