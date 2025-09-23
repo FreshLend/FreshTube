@@ -21,16 +21,6 @@
     <meta name="twitter:description" content="{{ channel.description }}">
     <meta name="twitter:image" content="{{ url_for('static', filename='imgs/' + channel.avatar) }}">
     <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
-    
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZYVP4ZFTP0"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-ZYVP4ZFTP0');
-    </script>
 
     <title>{{ channel.name }} - FreshTube</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='ui/main_' + session.get('theme', 'black') + '.css') }}">
@@ -198,20 +188,17 @@ window.addEventListener('load', function() {
         }
 
         function saveAvatar() {
-            // Add code to handle avatar upload
             document.getElementById('edit-avatar-form').style.display = 'none';
         }
 
         function saveName() {
             var newName = document.getElementById('name-input').value;
-            // Add code to save new name
             document.querySelector('.header-content h1').textContent = newName;
             document.getElementById('edit-name-form').style.display = 'none';
         }
 
         function saveDescription() {
             var newDescription = document.getElementById('description-input').value;
-            // Add code to save new description
             document.querySelector('.header-content p').textContent = newDescription;
             document.getElementById('edit-description-form').style.display = 'none';
         }

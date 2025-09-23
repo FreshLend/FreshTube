@@ -7,16 +7,39 @@ import shutil, requests, os, re, json, random, string
 from datetime import datetime
 from PIL import Image
 
-geoip2_db_path = 'static/ui/GeoLite2-Country.mmdb'
+# ======================
+# Конфигурация и константы
+# ======================
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'static/users'
+app.config['UPLOAD_FOLDER_IMG'] = 'static/imgs'
+app.config['MAX_CONTENT_LENGTH'] = 8192 * 1024 * 1024 # 8GB максимум для загрузки видео
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SECRET_KEY'] = 'your-secret-key' # заменить на всё что угодно
+app.config['SESSION_COOKIE_DOMAIN'] = '127.0.0.1'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = True
+Session(app)
 
+# Пути к файлам данных
 VIDEO_DATA_FILE = 'video_data.json'
 USER_DATA_FILE = 'user_data.json'
 COMMENTS_DATA_FILE = 'comments.json'
 LIKES_DISLIKES_FILE = 'likes_dislakes.json'
 COMMENT_LIKES_DISLIKES_FILE = 'comment_likes_dislakes.json'
 CHANNEL_DATA_FILE = 'channels.json'
+geoip2_db_path = 'static/ui/GeoLite2-Country.mmdb'
 
+# Блокировки
+blocked_ips = ['']
+blocked_countries = ['']
+blocked_accs = ['']
+
+# ======================
+# Вспомогательные функции
+# ======================
 def load_data(file):
+    """Загрузка данных из JSON файла"""
     if os.path.exists(file):
         try:
             with open(file, 'r') as f:
@@ -28,36 +51,15 @@ def load_data(file):
     return []
 
 def save_data(file, data):
+    """Сохранение данных в JSON файл"""
     try:
         with open(file, 'w') as f:
             json.dump(data, f, indent=4)
     except Exception as e:
         print(f"Error saving to {file}: {e}")
 
-videos = load_data(VIDEO_DATA_FILE)
-users = load_data(USER_DATA_FILE)
-comments = load_data(COMMENTS_DATA_FILE)
-likes_dislikes = load_data(LIKES_DISLIKES_FILE)
-comment_likes_dislikes_data = load_data(COMMENT_LIKES_DISLIKES_FILE)
-channels = load_data(CHANNEL_DATA_FILE)
-
-app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/users'
-app.config['UPLOAD_FOLDER_IMG'] = 'static/imgs'
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
-
-blocked_ips = ['']
-blocked_countries = ['']
-blocked_accs = ['']
-
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SECRET_KEY'] = '32768:8:1$ZCprqFWU8MweZXkZ$f119a37b478e0374c6602cbf23fb5d45f82d92ce50f8482e566c1728a379fac28bde089db3c88c5af0138c6d4d6cb58bf4dcab1e5a6f13dccb501ef9c47839de'
-app.config['SESSION_COOKIE_DOMAIN'] = '127.0.0.1'
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = True
-Session(app)
-
 def format_comment_text(text):
+    """Форматирование текста комментария"""
     text = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
     text = text.replace('\n', '<br>')
     url_pattern = re.compile(r'(https?://[^\s]+)')
@@ -67,9 +69,9 @@ def format_comment_text(text):
 app.jinja_env.filters['format_comment_text'] = format_comment_text
 
 def time_ago(upload_date):
+    """Форматирование даты в относительный формат (например, "5 минут назад")"""
     now = datetime.now()
     diff = now - upload_date
-
     seconds = diff.total_seconds()
     
     if seconds < 60:
@@ -90,8 +92,9 @@ def time_ago(upload_date):
     else:
         count = int(seconds // 31536000)
         return f"{count} {'год' if count == 1 else 'года' if count % 10 in [2, 3, 4] else 'лет'} назад"
-    
+
 def format_subscriber_count(count):
+    """Форматирование количества подписчиков"""
     if count >= 1_000_000_000:
         return f"{count // 1_000_000_000} млрд."
     elif count >= 1_000_000:
@@ -102,6 +105,7 @@ def format_subscriber_count(count):
         return str(count)
 
 def get_country_by_ip(ip):
+    """Определение страны по IP"""
     try:
         with geoip2.database.Reader(geoip2_db_path) as reader:
             response = reader.country(ip)
@@ -111,8 +115,27 @@ def get_country_by_ip(ip):
     except Exception as e:
         return None
 
+def generate_video_id(length=11):
+    """Генерация ID для видео"""
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for _ in range(length))
+
+def generate_nickname():
+    """Генерация случайного никнейма"""
+    length = random.randint(1, 50)
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+def generate_channel_id():
+    """Генерация ID для канала"""
+    length = random.randint(3, 30)
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+# ======================
+# Middleware и фильтры
+# ======================
 @app.before_request
 def check_ip():
+    """Проверка IP на блокировку"""
     client_ip = request.remote_addr
     if request.path.startswith('/static'):
         return None
@@ -125,6 +148,7 @@ def check_ip():
 
 @app.before_request
 def check_ban_acc():
+    """Проверка блокировки аккаунта"""
     user_id = session.get('user_id')
     if request.path.startswith('/static'):
         return None
@@ -133,10 +157,10 @@ def check_ban_acc():
     if user_id and str(user_id) in blocked_accs:
         user = next((u for u in users if u['id'] == user_id), None)
         return render_template('you_are_banned.html', user_id=user_id, user=user)
-        
-    
+
 @app.template_filter('format_number')
 def format_number(number):
+    """Фильтр для форматирования чисел"""
     if number >= 1_000_000_000:
         return f"{number / 1_000_000_000:.1f} млрд."
     elif number >= 1_000_000:
@@ -146,24 +170,22 @@ def format_number(number):
     else:
         return str(number)
 
-@app.route('/robots.txt')
-def robots():
-    return render_template('robots.txt')
-    
-@app.route('/sitemap.xml')
-def sitemap():
-    return render_template('sitemap.xml')
+# ======================
+# Загрузка данных
+# ======================
+videos = load_data(VIDEO_DATA_FILE)
+users = load_data(USER_DATA_FILE)
+comments = load_data(COMMENTS_DATA_FILE)
+likes_dislikes = load_data(LIKES_DISLIKES_FILE)
+comment_likes_dislikes_data = load_data(COMMENT_LIKES_DISLIKES_FILE)
+channels = load_data(CHANNEL_DATA_FILE)
 
-@app.route('/ip_not_allowed.html')
-def ip_not_allowed():
-    return render_template('ip_not_allowed.html')
-
-@app.route('/you_are_banned.html')
-def you_are_banned():
-    return render_template('you_are_banned.html')
-
+# ======================
+# Основные маршруты
+# ======================
 @app.route('/')
 def index():
+    """Главная страница"""
     sorted_videos = sorted(videos, key=lambda v: v['likes'] - v['dislikes'], reverse=True)
     for video in sorted_videos:
         video['relative_time'] = time_ago(datetime.fromisoformat(video['upload_date']))
@@ -174,6 +196,7 @@ def index():
 
 @app.route('/search')
 def search():
+    """Поиск видео"""
     query = request.args.get('q', '').strip().lower()
     
     if query:
@@ -186,39 +209,9 @@ def search():
     user = next((u for u in users if u['id'] == user_id), None)
     return render_template('search.html', query=query, videos=filtered_videos, user=user, user_id=user_id)
 
-@app.route('/search_videos')
-def search_videos():
-    query = request.args.get('query', '').strip().lower()
-    offset = int(request.args.get('offset', 0))
-    limit = 24
-
-    if query:
-        filtered_videos = [
-            video for video in videos if query in video['title'].lower() or query in video['description'].lower()
-        ]
-    else:
-        filtered_videos = []
-
-    next_videos = filtered_videos[offset:offset + limit]
-    all_videos_loaded = len(next_videos) < limit
-    base_static_url = url_for('static', filename='')
-
-    return jsonify({'videos': next_videos, 'static_url': base_static_url, 'all_videos_loaded': all_videos_loaded})
-
-@app.route('/load_more_videos')
-def load_more_videos():
-    offset = int(request.args.get('offset', 0))
-    limit = 24
-    sorted_videos = sorted(videos, key=lambda v: v['likes'] - v['dislikes'], reverse=True)
-    for video in sorted_videos:
-        video['relative_time'] = time_ago(datetime.fromisoformat(video['upload_date']))
-    next_videos = sorted_videos[offset:offset + limit]
-    all_videos_loaded = len(next_videos) < limit
-    base_static_url = url_for('static', filename='')
-    return jsonify({'videos': next_videos, 'static_url': base_static_url, 'all_videos_loaded': all_videos_loaded})
-
 @app.route('/watch')
 def video():
+    """Страница просмотра видео"""
     video_id = request.args.get('si', type=str)
     video = next((v for v in videos if v['id'] == video_id), None)
     if video is None:
@@ -250,6 +243,7 @@ def video():
 
 @app.route('/channel')
 def channel():
+    """Страница канала"""
     channel_id = request.args.get('id', type=str)
     if channel_id is None:
         return "Канал не найден", 404
@@ -273,30 +267,48 @@ def channel():
     user_id_from_session = session.get('user_id')
     return render_template('channel.html', formatted_subscribers=formatted_subscribers, user=user, channel=channel, videos=user_videos, user_id=user_id_from_session)
 
-@app.route('/settings')
-def settings():
-    user_id = session.get('user_id')
-    user = next((u for u in users if u['id'] == user_id), None)
-    return render_template('settings.html', user=user, user_id=user_id)
+# ======================
+# AJAX и API маршруты
+# ======================
+@app.route('/search_videos')
+def search_videos():
+    """AJAX поиск видео"""
+    query = request.args.get('query', '').strip().lower()
+    offset = int(request.args.get('offset', 0))
+    limit = 24
 
-@app.route('/publish')
-def publish():
-	return render_template('publish.html')
-	
-@app.route('/signin')
-def signin():
-	return render_template('login.html')
-	
-@app.route('/signup')
-def signup():
-	return render_template('register.html')
+    if query:
+        filtered_videos = [
+            video for video in videos if query in video['title'].lower() or query in video['description'].lower()
+        ]
+    else:
+        filtered_videos = []
 
-def generate_video_id(length=11):
-    characters = string.ascii_letters + string.digits
-    return ''.join(random.choice(characters) for _ in range(length))
+    next_videos = filtered_videos[offset:offset + limit]
+    all_videos_loaded = len(next_videos) < limit
+    base_static_url = url_for('static', filename='')
 
+    return jsonify({'videos': next_videos, 'static_url': base_static_url, 'all_videos_loaded': all_videos_loaded})
+
+@app.route('/load_more_videos')
+def load_more_videos():
+    """AJAX подгрузка видео"""
+    offset = int(request.args.get('offset', 0))
+    limit = 24
+    sorted_videos = sorted(videos, key=lambda v: v['likes'] - v['dislikes'], reverse=True)
+    for video in sorted_videos:
+        video['relative_time'] = time_ago(datetime.fromisoformat(video['upload_date']))
+    next_videos = sorted_videos[offset:offset + limit]
+    all_videos_loaded = len(next_videos) < limit
+    base_static_url = url_for('static', filename='')
+    return jsonify({'videos': next_videos, 'static_url': base_static_url, 'all_videos_loaded': all_videos_loaded})
+
+# ======================
+# Действия с видео
+# ======================
 @app.route('/upload', methods=['POST'])
 def upload():
+    """Загрузка видео"""
     if 'video' not in request.files or 'cover' not in request.files:
         return redirect(request.url)
     video_file = request.files['video']
@@ -356,8 +368,12 @@ def upload():
             return f"Ошибка при загрузке: {str(e)}", 500
     return redirect(url_for('index'))
 
+# ======================
+# Лайки/дизлайки
+# ======================
 @app.route('/like_dislike', methods=['POST'])
 def like_dislike():
+    """Обработка лайков/дизлайков видео"""
     video_id = str(request.form['video_id'])
     action = request.form['action']
     user_id = session.get('user_id')
@@ -398,6 +414,7 @@ def like_dislike():
 
 @app.route('/vote', methods=['POST'])
 def vote():
+    """Обработка лайков/дизлайков комментариев"""
     comment_id = int(request.form['comment_id'])
     action = request.form['action']
     user_id = session.get('user_id')
@@ -436,8 +453,12 @@ def vote():
     save_data(COMMENT_LIKES_DISLIKES_FILE, comment_likes_dislikes_data)
     return redirect(url_for('video', si=comment.get('video_id')))
 
+# ======================
+# Подписки
+# ======================
 @app.route('/subscribe', methods=['POST'])
 def subscribe():
+    """Подписка на канал"""
     user_id = session.get('user_id')
     channel_id = str(request.form['channel_id'])
     if not user_id or not any(user['id'] == user_id for user in users):
@@ -454,6 +475,7 @@ def subscribe():
 
 @app.route('/unsubscribe', methods=['POST'])
 def unsubscribe():
+    """Отписка от канала"""
     user_id = session.get('user_id')
     channel_id = str(request.form['channel_id'])
     if not user_id or not any(user['id'] == user_id for user in users):
@@ -470,8 +492,12 @@ def unsubscribe():
         return "You are not subscribed to this channel", 400
     return redirect(request.referrer or url_for('channel', id=channel_id))
 
+# ======================
+# Комментарии
+# ======================
 @app.route('/add_comment', methods=['POST'])
 def add_comment():
+    """Добавление комментария"""
     global comments
     if 'user_id' not in session:
         return redirect(url_for('register'))
@@ -506,6 +532,7 @@ def add_comment():
 
 @app.route('/add_sub_comment', methods=['POST'])
 def add_sub_comment():
+    """Добавление ответа на комментарий"""
     if 'user_id' not in session:
         return redirect(url_for('register'))
     user_id = session['user_id']
@@ -532,20 +559,12 @@ def add_sub_comment():
         save_data(COMMENTS_DATA_FILE, comments)
     return redirect(url_for('video', si=parent_comment['video_id']))
 
-@app.route('/static/<path:filename>')
-def custom_static(filename):
-    return send_from_directory('static', filename)
-
-def generate_nickname():
-    length = random.randint(1, 50)
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
-
-def generate_channel_id():
-    length = random.randint(3, 30)
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
-
+# ======================
+# Аутентификация
+# ======================
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """Регистрация пользователя"""
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -601,6 +620,7 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """Авторизация пользователя"""
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -617,14 +637,26 @@ def login():
 
 @app.route('/logout')
 def logout():
+    """Выход из аккаунта"""
     user_id = session.get('user_id')
     if user_id:
         session.pop('avatar', None)
     session.pop('user_id', None)
     return redirect(url_for('index'))
 
+# ======================
+# Настройки пользователя
+# ======================
+@app.route('/settings')
+def settings():
+    """Страница настроек"""
+    user_id = session.get('user_id')
+    user = next((u for u in users if u['id'] == user_id), None)
+    return render_template('settings.html', user=user, user_id=user_id)
+
 @app.route('/save-avatar', methods=['POST'])
 def save_avatar():
+    """Сохранение аватара"""
     if 'user_id' not in session:
         return redirect(url_for('register'))
     user_id = session['user_id']
@@ -656,6 +688,7 @@ def save_avatar():
 
 @app.route('/save-nickname', methods=['POST'])
 def save_nickname():
+    """Сохранение никнейма"""
     if 'user_id' not in session:
         return redirect(url_for('register'))
     user_id = session['user_id']
@@ -677,6 +710,7 @@ def save_nickname():
 
 @app.route('/save-description', methods=['POST'])
 def save_description():
+    """Сохранение описания канала"""
     if 'user_id' not in session:
         return redirect(url_for('register'))
     user_id = session['user_id']
@@ -692,6 +726,7 @@ def save_description():
 
 @app.route('/update_theme', methods=['POST'])
 def update_theme():
+    """Обновление темы"""
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('register'))
@@ -704,5 +739,45 @@ def update_theme():
         return redirect(url_for('settings'))
     return 'User not found', 404
 
+# ======================
+# Вспомогательные маршруты
+# ======================
+@app.route('/static/<path:filename>')
+def custom_static(filename):
+    """Обработка статических файлов"""
+    return send_from_directory('static', filename)
+
+@app.route('/robots.txt')
+def robots():
+    """robots.txt"""
+    return render_template('robots.txt')
+    
+@app.route('/sitemap.xml')
+def sitemap():
+    """sitemap.xml"""
+    return render_template('sitemap.xml')
+
+@app.route('/ip_not_allowed.html')
+def ip_not_allowed():
+    """Страница заблокированного IP"""
+    return render_template('ip_not_allowed.html')
+
+@app.route('/you_are_banned.html')
+def you_are_banned():
+    """Страница заблокированного аккаунта"""
+    return render_template('you_are_banned.html')
+
+@app.route('/publish')
+def publish():
+	return render_template('publish.html')
+	
+@app.route('/signin')
+def signin():
+	return render_template('login.html')
+	
+@app.route('/signup')
+def signup():
+	return render_template('register.html')
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=43034, debug=True) # ssl_context=("fullchain.crt", "certificate.key"),
+    app.run(host='0.0.0.0', port=5000, debug=True) # ssl_context=("fullchain.crt", "certificate.key"),

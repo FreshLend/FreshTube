@@ -41,7 +41,7 @@
                     </div>
                 </div>
                 <div class="channel-link">
-                    <a href="{{ url_for('channel', id=session.get('user_id')) }}">Посмотреть канал</a>
+                    <a href="{{ url_for('channel', id=session.get('channel_id')) }}">Посмотреть канал</a>
                 </div>
                 <div class="menu-section">
                     <a href="{{ url_for('logout') }}"><button><b>Выйти</b></button></a>

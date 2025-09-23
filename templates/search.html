@@ -5,15 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ url_for('static', filename='ui/favicon.ico') }}">
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZYVP4ZFTP0"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-ZYVP4ZFTP0');
-    </script>
     <title>FreshTube - Поиск</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='ui/main_' + session.get('theme', 'black') + '.css') }}">
 <style>
@@ -109,15 +100,13 @@ window.addEventListener('load', function() {
         let offset = 24;
         let isLoading = false;
         let allVideosLoaded = false;
-        let searchQuery = ''; // Строка для поиска
-    
-        // Функция для загрузки видео с учетом поиска
+        let searchQuery = '';
+
         function loadVideos(query = '', reset = false) {
             if (isLoading || (allVideosLoaded && !reset)) return;
             isLoading = true;
             document.getElementById('loading').style.display = 'block';
-    
-            // Если был запрос поиска, обнуляем offset
+
             if (reset) {
                 offset = 0;
                 allVideosLoaded = false;
@@ -130,7 +119,7 @@ window.addEventListener('load', function() {
                         let videoList = document.getElementById('video-list');
                         let staticUrl = data.static_url;
                         if (reset) {
-                            videoList.innerHTML = ''; // Очистка списка при новом поиске
+                            videoList.innerHTML = '';
                         }
                         data.videos.forEach(video => {
                             let li = document.createElement('li');
@@ -171,8 +160,7 @@ window.addEventListener('load', function() {
                     isLoading = false;
                 });
         }
-    
-        // Отслеживаем изменение текста в поле поиска
+
         function redirectToSearch(event) {
             if (event.key === 'Enter') {
                 var query = document.querySelector('input[type="text"]').value.trim();
@@ -182,16 +170,14 @@ window.addEventListener('load', function() {
                 }
             }
         }
-    
-        // При нажатии клавиши Enter запускаем поиск
+
         document.querySelector('input[type="text"]').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 searchQuery = event.target.value;
                 loadVideos(searchQuery, true);
             }
         });
-    
-        // Загружаем дополнительные видео при прокрутке
+
         window.addEventListener('scroll', function() {
             if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100) {
                 loadVideos(searchQuery);

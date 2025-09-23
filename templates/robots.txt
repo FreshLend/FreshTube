@@ -7,4 +7,4 @@ Disallow: /login
 Disallow: /search
 Disallow: /ip_not_allowed
 Disallow: /you_are_banned
-Sitemap: https://freshtube.ru:43034
+Sitemap: https://localhost:5000
