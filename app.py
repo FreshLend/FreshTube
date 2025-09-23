@@ -15,7 +15,7 @@ app.config['UPLOAD_FOLDER'] = 'static/users'
 app.config['UPLOAD_FOLDER_IMG'] = 'static/imgs'
 app.config['MAX_CONTENT_LENGTH'] = 8192 * 1024 * 1024 # 8GB максимум для загрузки видео
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SECRET_KEY'] = 'your-secret-key' # заменить
+app.config['SECRET_KEY'] = 'your-secret-key' # заменить на всё что угодно
 Session(app)
 
 # Пути к файлам данных
@@ -186,9 +186,11 @@ def index():
     sorted_videos = sorted(videos, key=lambda v: v['likes'] - v['dislikes'], reverse=True)
     for video in sorted_videos:
         video['relative_time'] = time_ago(datetime.fromisoformat(video['upload_date']))
+    
     user_id = session.get('user_id')
-    user = next((u for u in users if u['id'] == user_id), None)
+    user = next((u for u in users if u['id'] == user_id), None) if user_id else None
     user_theme = session.get('theme', 'black')
+    
     return render_template('index.html', videos=sorted_videos, user=user, user_id=user_id, user_theme=user_theme)
 
 @app.route('/search')
@@ -307,44 +309,60 @@ def load_more_videos():
 def upload():
     """Загрузка видео"""
     if 'video' not in request.files or 'cover' not in request.files:
-        return redirect(request.url)
+        return jsonify({'error': 'Файлы не загружены'}), 400
+        
     video_file = request.files['video']
     cover_file = request.files['cover']
     title = request.form.get('title', '')
     description = request.form.get('description', '')
+    
     if 'user_id' not in session:
-        return redirect(url_for('register'))
+        return jsonify({'error': 'Требуется авторизация'}), 401
+        
     user_id = session['user_id']
     user = next((u for u in users if u['id'] == user_id), None)
     if not user:
-        return "Пользователь не найден.", 404
+        return jsonify({'error': 'Пользователь не найден'}), 404
+        
+    if video_file.filename == '' or cover_file.filename == '':
+        return jsonify({'error': 'Не выбраны файлы'}), 400
+        
     formatted_description = format_comment_text(description)
-    channels = load_data(CHANNEL_DATA_FILE)
-    channel = next((c for c in channels if c['user_id'] == user_id), None)
+    channels_data = load_data(CHANNEL_DATA_FILE)
+    channel = next((c for c in channels_data if c['user_id'] == user_id), None)
+    
     if not channel:
-        return redirect(url_for('404'))
+        return jsonify({'error': 'Канал не найден'}), 404
+        
     channel_id = channel['id']
+    
     if video_file and cover_file:
         video_id = generate_video_id()
         video_filename = f"{video_id}.mp4"
         cover_filename = f"{video_id}.webp"
         user_folder = os.path.join(app.config['UPLOAD_FOLDER'], f'user_{user_id}')
+        
         if not os.path.exists(user_folder):
             os.makedirs(user_folder)
+            
         video_folder = os.path.join(user_folder, 'videos')
         img_folder = os.path.join(user_folder, 'imgs')
+        
         if not os.path.exists(video_folder):
             os.makedirs(video_folder)
         if not os.path.exists(img_folder):
             os.makedirs(img_folder)
+            
         try:
             video_path = os.path.join(video_folder, video_filename)
             video_file.save(video_path)
+            
             cover_path = os.path.join(img_folder, cover_filename)
             with Image.open(cover_file) as img:
                 img = img.resize((640, 360))
                 img = img.convert("RGB")
                 img.save(cover_path, format='WebP')
+                
             upload_date = datetime.now().isoformat()
             new_video = {
                 'id': video_id,
@@ -361,9 +379,14 @@ def upload():
             }
             videos.append(new_video)
             save_data(VIDEO_DATA_FILE, videos)
+            
+            video_url = url_for('video', si=video_id, _external=False)
+            return jsonify({'success': True, 'redirect_url': video_url})
+            
         except Exception as e:
-            return f"Ошибка при загрузке: {str(e)}", 500
-    return redirect(url_for('index'))
+            return jsonify({'error': f'Ошибка при загрузке: {str(e)}'}), 500
+            
+    return jsonify({'error': 'Неизвестная ошибка'}), 500
 
 # ======================
 # Лайки/дизлайки
@@ -559,6 +582,27 @@ def add_sub_comment():
 # ======================
 # Аутентификация
 # ======================
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Авторизация пользователя"""
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        user = next((u for u in users if u['email'] == email), None)
+        
+        if user and check_password_hash(user['password'], password):
+            session['user_id'] = user['id']
+            session['avatar'] = user.get('avatar')
+            session['theme'] = user.get('theme', 'black')
+            
+            channel = next((ch for ch in channels if ch['user_id'] == user['id']), None)
+            if channel:
+                session['channel_id'] = channel['id']
+            
+            return redirect(url_for('index'))
+        return "Неверный email или пароль.", 400
+    return render_template('login.html')
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """Регистрация пользователя"""
@@ -568,15 +612,19 @@ def register():
         avatar = request.files.get('avatar')
         nickname = generate_nickname()
         channel_id = generate_channel_id()
+        
         while any(u['nickname'] == nickname for u in users):
             nickname = generate_nickname()
-        while any(u['id'] == channel_id for u in channels):
+        while any(ch['id'] == channel_id for ch in channels):
             channel_id = generate_channel_id()
+            
         if any(u['email'] == email for u in users):
             return "Пользователь с таким email уже существует.", 400
+            
         user_id = len(users) + 1
         avatar_filename = f"avatar_{user_id}.jpg"
-        if avatar:
+        
+        if avatar and avatar.filename:
             try:
                 upload_folder = app.config['UPLOAD_FOLDER_IMG']
                 if not os.path.exists(upload_folder):
@@ -589,10 +637,20 @@ def register():
         else:
             try:
                 default_avatar_path = os.path.join('static', 'ui', 'user.png')
-                destination_path = os.path.join('static', 'ui', 'user.png')
-                shutil.copy(default_avatar_path, destination_path)
+                upload_folder = app.config['UPLOAD_FOLDER_IMG']
+                if not os.path.exists(upload_folder):
+                    os.makedirs(upload_folder)
+                
+                destination_path = os.path.join(upload_folder, avatar_filename)
+                
+                if os.path.abspath(default_avatar_path) != os.path.abspath(destination_path):
+                    shutil.copy2(default_avatar_path, destination_path)
+                else:
+                    avatar_filename = "user.png"
+                    
             except Exception as e:
                 return f"Ошибка при сохранении аватара по умолчанию: {e}", 500
+        
         new_user = {
             'id': user_id,
             'nickname': nickname,
@@ -604,6 +662,7 @@ def register():
         }
         users.append(new_user)
         save_data(USER_DATA_FILE, users)
+        
         new_channel = {
             'id': channel_id,
             'user_id': new_user['id'],
@@ -612,25 +671,9 @@ def register():
         }
         channels.append(new_channel)
         save_data(CHANNEL_DATA_FILE, channels)
+        
         return redirect(url_for('login'))
     return render_template('register.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """Авторизация пользователя"""
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        user = next((u for u in users if u['email'] == email), None)
-        channel = next((ch for ch in channels if ch['user_id'] == user['id']), None)
-        if user and check_password_hash(user['password'], password):
-            session['user_id'] = user['id']
-            session['channel_id'] = channel['id']
-            session['avatar'] = user.get('avatar')
-            session['theme'] = user.get('theme', 'black')
-            return redirect(url_for('index'))
-        return "Неверный email или пароль.", 400
-    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
