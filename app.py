@@ -592,7 +592,7 @@ def register():
         else:
             try:
                 default_avatar_path = os.path.join('static', 'ui', 'user.png')
-                destination_path = os.path.join(app.config['UPLOAD_FOLDER_IMG'], avatar_filename)
+                destination_path = os.path.join('static', 'ui', 'user.png')
                 shutil.copy(default_avatar_path, destination_path)
             except Exception as e:
                 return f"Ошибка при сохранении аватара по умолчанию: {e}", 500
