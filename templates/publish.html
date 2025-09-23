@@ -96,13 +96,13 @@
      </li>
 </ul>
 
-    <script>
-        function toggleUserMenu() {
-            const menu = document.getElementById('user-menu');
-            menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
-        }
-    </script>
-    
+<script>
+    function toggleUserMenu() {
+        const menu = document.getElementById('user-menu');
+        menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+    }
+</script>
+
 <script>
     document.getElementById('cover').addEventListener('change', function(event) {
         const file = event.target.files[0];
@@ -128,89 +128,109 @@
     });
 </script>
 
-    <script>
-        document.getElementById('uploadForm').addEventListener('submit', function(event) {
-            event.preventDefault();
+<script>
+    document.getElementById('uploadForm').addEventListener('submit', function(event) {
+        event.preventDefault();
 
-            var formData = new FormData(this);
+        var formData = new FormData(this);
 
-            document.getElementById('progressContainer').style.display = 'block';
+        document.getElementById('progressContainer').style.display = 'block';
 
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/upload', true);
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload', true);
 
-            var startTime = Date.now();
-            var previousLoaded = 0;
+        var startTime = Date.now();
+        var previousLoaded = 0;
 
-            function formatBytes(bytes) {
-                if (bytes < 1024) return bytes + ' б/с';
-                else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' Кб/с';
-                else if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' Мб/с';
-                else return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' Гб/с';
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' б/с';
+            else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' Кб/с';
+            else if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' Мб/с';
+            else return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' Гб/с';
+        }
+
+        function formatTime(seconds) {
+            var days = Math.floor(seconds / (24 * 3600));
+            var hours = Math.floor((seconds % (24 * 3600)) / 3600);
+            var minutes = Math.floor((seconds % 3600) / 60);
+            var sec = Math.floor(seconds % 60);
+
+            var timeString = "";
+            if (days > 0) timeString += days + " дн ";
+            if (hours > 0) timeString += hours + " ч ";
+            if (minutes > 0) timeString += minutes + " мин ";
+            timeString += sec + " сек";
+
+            return timeString;
+        }
+
+        xhr.upload.addEventListener('progress', function(event) {
+            if (event.lengthComputable) {
+                var percent = (event.loaded / event.total) * 100;
+                var loadedMB = (event.loaded / (1024 * 1024)).toFixed(2);
+                var totalMB = (event.total / (1024 * 1024)).toFixed(2);
+
+                var currentTime = Date.now();
+                var timeElapsed = (currentTime - startTime) / 1000;
+                var bytesPerSecond = (event.loaded - previousLoaded) / timeElapsed;
+
+                var remainingBytes = event.total - event.loaded;
+                var estimatedTime = remainingBytes / bytesPerSecond;
+                var estimatedTimeSec = Math.max(0, Math.round(estimatedTime));
+
+                var formattedTime = formatTime(estimatedTimeSec);
+
+                document.getElementById('uploadProgress').value = percent;
+                document.getElementById('progressText').textContent = 
+                    Math.round(percent) + '% - ' + loadedMB + 'MB из ' + totalMB + 'MB';
+                document.getElementById('speedText').textContent = 'Скорость: ' + formatBytes(bytesPerSecond);
+                document.getElementById('estimatedTimeText').textContent = 'Ожидаемое время: ' + formattedTime;
+
+                previousLoaded = event.loaded;
+                startTime = currentTime;
             }
-
-            function formatTime(seconds) {
-                var days = Math.floor(seconds / (24 * 3600));
-                var hours = Math.floor((seconds % (24 * 3600)) / 3600);
-                var minutes = Math.floor((seconds % 3600) / 60);
-                var sec = Math.floor(seconds % 60);
-
-                var timeString = "";
-                if (days > 0) timeString += days + " дн ";
-                if (hours > 0) timeString += hours + " ч ";
-                if (minutes > 0) timeString += minutes + " мин ";
-                timeString += sec + " сек";
-
-                return timeString;
-            }
-
-            xhr.upload.addEventListener('progress', function(event) {
-                if (event.lengthComputable) {
-                    var percent = (event.loaded / event.total) * 100;
-                    var loadedMB = (event.loaded / (1024 * 1024)).toFixed(2);
-                    var totalMB = (event.total / (1024 * 1024)).toFixed(2);
-
-                    var currentTime = Date.now();
-                    var timeElapsed = (currentTime - startTime) / 1000;
-                    var bytesPerSecond = (event.loaded - previousLoaded) / timeElapsed;
-
-                    var remainingBytes = event.total - event.loaded;
-                    var estimatedTime = remainingBytes / bytesPerSecond;
-                    var estimatedTimeSec = Math.max(0, Math.round(estimatedTime));
-
-                    var formattedTime = formatTime(estimatedTimeSec);
-
-                    document.getElementById('uploadProgress').value = percent;
-                    document.getElementById('progressText').textContent = 
-                        Math.round(percent) + '% - ' + loadedMB + 'MB из ' + totalMB + 'MB';
-                    document.getElementById('speedText').textContent = 'Скорость: ' + formatBytes(bytesPerSecond);
-                    document.getElementById('estimatedTimeText').textContent = 'Ожидаемое время: ' + formattedTime;
-
-                    previousLoaded = event.loaded;
-                    startTime = currentTime;
-                }
-            });
-
-            xhr.onload = function() {
-                if (xhr.status == 200) {
-                    document.getElementById('progressText').textContent = 'Загрузка завершена!';
-                    document.getElementById('speedText').textContent = '';
-                    document.getElementById('estimatedTimeText').textContent = '';
-                    document.getElementById('uploadProgress').style.transition = 'width 0.5s ease-out'
-                    document.getElementById('uploadProgress').value = 100;
-                    setTimeout(function() {
-                        document.getElementById('progressContainer').style.display = 'none';
-                        document.querySelector('button[type="submit"]').textContent = "Опубликовать";
-                    }, 1000);
-                } else {
-                    alert('Ошибка при загрузке файлов.');
-                }
-            };
-
-            document.querySelector('button[type="submit"]').textContent = "Загрузка...";
-
-            xhr.send(formData);
         });
-    </script>
+
+        xhr.onload = function() {
+            if (xhr.status == 200) {
+                document.getElementById('progressText').textContent = 'Загрузка завершена!';
+                document.getElementById('speedText').textContent = '';
+                document.getElementById('estimatedTimeText').textContent = '';
+                document.getElementById('uploadProgress').style.transition = 'width 0.5s ease-out'
+                document.getElementById('uploadProgress').value = 100;
+                
+                setTimeout(function() {
+                    if (xhr.responseURL && xhr.responseURL.includes('/watch')) {
+                        window.location.href = xhr.responseURL;
+                    } else {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response.redirect_url) {
+                                window.location.href = response.redirect_url;
+                            }
+                        } catch (e) {
+                            window.location.reload();
+                        }
+                    }
+                }, 1000);
+                
+            } else {
+                alert('Ошибка при загрузке файлов.');
+                document.querySelector('button[type="submit"]').textContent = "Опубликовать";
+                document.getElementById('progressContainer').style.display = 'none';
+            }
+        };
+
+        xhr.onerror = function() {
+            alert('Ошибка сети при загрузке файлов.');
+            document.querySelector('button[type="submit"]').textContent = "Опубликовать";
+            document.getElementById('progressContainer').style.display = 'none';
+        };
+
+        document.querySelector('button[type="submit"]').textContent = "Загрузка...";
+
+        xhr.send(formData);
+    });
+</script>
 </body>
 </html> 
