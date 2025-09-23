@@ -1,6 +1,6 @@
 ## Установка Python
 **Установить:** Python 3.10  
-*Поставить галочку при установке:* Add Python to Path  
+**Поставить галочку при установке:** Add Python to Path  
 
 ## Установка и Запуск
 **Git:** git clone https://github.com/FreshLend/FreshTube.git  
