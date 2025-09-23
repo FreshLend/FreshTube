@@ -13,7 +13,6 @@
 ```py
 app.config['MAX_CONTENT_LENGTH'] = 8192 * 1024 * 1024 # 8GB максимум для загрузки видео
 app.config['SECRET_KEY'] = 'your-secret-key' # заменить
-app.config['SESSION_COOKIE_DOMAIN'] = '127.0.0.1' # заменить на IP хоста
 ```
 и в конце, выбрать нужный порт  
 ```py
