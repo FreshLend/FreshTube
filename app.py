@@ -16,9 +16,6 @@ app.config['UPLOAD_FOLDER_IMG'] = 'static/imgs'
 app.config['MAX_CONTENT_LENGTH'] = 8192 * 1024 * 1024 # 8GB максимум для загрузки видео
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SECRET_KEY'] = 'your-secret-key' # заменить
-app.config['SESSION_COOKIE_DOMAIN'] = '127.0.0.1' # заменить на IP хоста
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = True
 Session(app)
 
 # Пути к файлам данных
